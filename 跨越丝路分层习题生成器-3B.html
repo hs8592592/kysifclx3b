@@ -1,0 +1,2922 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>跨越丝路分层习题生成器 · 3B</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #f7f5f0;
+  --card: #ffffff;
+  --text: #1a1714;
+  --muted: #7a7570;
+  --border: #e2ded8;
+  --t1: #d4622a; --t1l: #fdf0ea; --t1m: #f5a07a;
+  --t2: #2a6fd4; --t2l: #eaf0fd; --t2m: #7aaaf5;
+  --t3: #1f8c5a; --t3l: #e8f7f0; --t3m: #6fcba0;
+  --correct: #1f8c5a; --correctbg: #e8f7f0;
+  --wrong: #c0392b; --wrongbg: #fdecea;
+  --gold: #c9a227;
+  --radius: 14px;
+  --shadow: 0 2px 16px rgba(0,0,0,0.07);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); font-family: 'DM Sans', sans-serif; color: var(--text); min-height: 100vh; }
+
+/* ─── SETUP SCREEN ─── */
+.setup { max-width: 780px; margin: 0 auto; padding: 2.5rem 1.5rem; }
+.brand { display: flex; align-items: center; gap: 10px; margin-bottom: 2rem; }
+.brand-icon { width: 40px; height: 40px; background: var(--text); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-family: 'Noto Serif SC', serif; font-size: 20px; font-weight: 600; }
+.brand h1 { font-size: 17px; font-weight: 600; line-height: 1.2; }
+.brand p { font-size: 12px; color: var(--muted); }
+.section-label { font-size: 11px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-bottom: 10px; }
+.lesson-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; margin-bottom: 1.5rem; }
+.lesson-card { border: 1.5px solid var(--border); border-radius: 10px; background: var(--card); padding: 10px 12px; cursor: pointer; transition: all .15s; }
+.lesson-card:hover { border-color: #aaa; }
+.lesson-card.active { border-color: var(--text); box-shadow: 0 0 0 3px rgba(26,23,20,.08); }
+.lesson-card .lc-num { font-size: 10px; color: var(--muted); margin-bottom: 2px; }
+.lesson-card .lc-title { font-size: 13px; font-weight: 500; line-height: 1.3; }
+.lesson-card .lc-cn { font-size: 11px; color: var(--muted); font-family: 'Noto Serif SC', serif; }
+.tier-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 1.75rem; }
+.tier-card { border: 1.5px solid var(--border); border-radius: 12px; background: var(--card); padding: 14px; cursor: pointer; transition: all .15s; }
+.tier-card:hover { transform: translateY(-1px); box-shadow: var(--shadow); }
+.tier-card.t1.active { border-color: var(--t1); background: var(--t1l); }
+.tier-card.t2.active { border-color: var(--t2); background: var(--t2l); }
+.tier-card.t3.active { border-color: var(--t3); background: var(--t3l); }
+.tier-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+.t1 .tier-dot { background: var(--t1); } .t2 .tier-dot { background: var(--t2); } .t3 .tier-dot { background: var(--t3); }
+.tier-card .tc-level { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin-bottom: 6px; display: flex; align-items: center; }
+.tier-card.t1.active .tc-level { color: var(--t1); } .tier-card.t2.active .tc-level { color: var(--t2); } .tier-card.t3.active .tc-level { color: var(--t3); }
+.tier-card .tc-cn { font-size: 16px; font-weight: 600; font-family: 'Noto Serif SC', serif; margin-bottom: 4px; }
+.tier-card .tc-desc { font-size: 11px; color: var(--muted); line-height: 1.4; }
+.start-btn { width: 100%; padding: 16px; background: var(--text); color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; justify-content: center; gap: 10px; transition: opacity .15s; }
+.start-btn:hover { opacity: .88; }
+.start-btn .sb-cn { font-family: 'Noto Serif SC', serif; font-size: 15px; }
+
+/* ─── QUIZ SCREEN ─── */
+.quiz { display: none; max-width: 860px; margin: 0 auto; padding: 1.5rem; }
+.quiz-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.25rem; }
+.tier-badge { padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.tb-t1 { background: var(--t1l); color: var(--t1); } .tb-t2 { background: var(--t2l); color: var(--t2); } .tb-t3 { background: var(--t3l); color: var(--t3); }
+.q-counter { font-size: 13px; color: var(--muted); }
+.timer-wrap { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; }
+.timer-wrap svg { width: 16px; height: 16px; }
+.timer-warn { color: #c9a227; } .timer-urgent { color: var(--wrong); }
+.exit-btn { padding: 5px 12px; border-radius: 20px; border: 1.5px solid var(--border); background: none; font-size: 12px; font-weight: 600; color: var(--muted); cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all .15s; }
+.exit-btn:hover { border-color: var(--wrong); color: var(--wrong); background: var(--wrongbg); }
+.progress { height: 4px; background: var(--border); border-radius: 2px; margin-bottom: 1.5rem; overflow: hidden; }
+.progress-fill { height: 100%; border-radius: 2px; transition: width .4s ease; }
+.pf-t1 { background: var(--t1); } .pf-t2 { background: var(--t2); } .pf-t3 { background: var(--t3); }
+
+/* question card */
+.q-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1rem; box-shadow: var(--shadow); }
+.q-type-tag { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin-bottom: 10px; }
+.q-stem { font-size: 22px; font-weight: 500; line-height: 1.55; margin-bottom: 6px; }
+.q-stem .cn { font-family: 'Noto Serif SC', serif; }
+.q-hint { font-size: 12px; color: var(--muted); padding: 8px 12px; background: var(--bg); border-radius: 8px; border-left: 3px solid var(--border); margin-top: 10px; margin-bottom: 16px; }
+
+/* MC options */
+.options-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.opt-btn { background: var(--bg); border: 1.5px solid var(--border); border-radius: 10px; padding: 16px 18px; cursor: pointer; font-size: 17px; font-family: 'DM Sans', sans-serif; color: var(--text); text-align: left; display: flex; align-items: flex-start; gap: 10px; transition: all .12s; line-height: 1.4; }
+.opt-btn:hover:not(:disabled) { border-color: #999; background: var(--card); }
+.opt-btn:disabled { cursor: default; }
+.opt-btn.correct { background: var(--correctbg); border-color: var(--correct); color: var(--correct); }
+.opt-btn.wrong { background: var(--wrongbg); border-color: var(--wrong); color: var(--wrong); }
+.opt-key { width: 24px; height: 24px; border-radius: 6px; background: var(--card); border: 1px solid var(--border); font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--muted); }
+.opt-btn.correct .opt-key { background: var(--correct); border-color: var(--correct); color: #fff; }
+.opt-btn.wrong .opt-key { background: var(--wrong); border-color: var(--wrong); color: #fff; }
+.opt-text { font-family: 'Noto Serif SC', serif; font-size: 18px; }
+
+/* fill-in */
+.fill-wrap { display: flex; gap: 8px; flex-direction: column; }
+.fill-input { width: 100%; border: 1.5px solid var(--border); border-radius: 10px; padding: 16px 18px; font-size: 20px; font-family: 'Noto Serif SC', serif; background: var(--bg); color: var(--text); outline: none; transition: border-color .15s; }
+.fill-input:focus { border-color: #999; background: var(--card); }
+.fill-input.correct { border-color: var(--correct); background: var(--correctbg); color: var(--correct); }
+.fill-input.wrong { border-color: var(--wrong); background: var(--wrongbg); color: var(--wrong); }
+.submit-btn { padding: 11px 20px; background: var(--text); color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; transition: opacity .15s; align-self: flex-start; }
+.submit-btn:hover { opacity: .85; }
+
+/* match */
+.match-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.match-col-label { font-size: 11px; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .06em; }
+.match-col { display: flex; flex-direction: column; gap: 7px; }
+.match-item { padding: 13px 16px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 18px; cursor: pointer; background: var(--bg); color: var(--text); font-family: 'Noto Serif SC', serif; text-align: center; transition: all .12s; }
+.match-item:hover:not(.matched):not(.wrong-match) { border-color: #999; background: var(--card); }
+.match-item.selected { border-color: var(--t2); background: var(--t2l); color: var(--t2); }
+.match-item.matched { border-color: var(--correct); background: var(--correctbg); color: var(--correct); cursor: default; }
+.match-item.wrong-match { border-color: var(--wrong); background: var(--wrongbg); color: var(--wrong); }
+.match-item.paired-left, .match-item.paired-right { border-color: var(--t2); background: var(--t2l); color: var(--t2); }
+.match-check-btn { margin-top: 10px; padding: 10px 18px; background: var(--text); color: #fff; border: none; border-radius: 9px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+
+/* ─── READING PASSAGE ─── */
+.reading-passage {
+  background: var(--t3l);
+  border: 1.5px solid var(--t3m);
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
+  font-family: 'Noto Serif SC', serif;
+  color: var(--text);
+  line-height: 1;
+}
+.reading-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--t3);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.reading-label::before { content: '📖'; font-size: 13px; }
+
+/* Word-block pinyin layout */
+.passage-body {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0;
+  row-gap: 10px;
+}
+/* Each word or punctuation unit */
+.w {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  margin: 0 1px;
+  vertical-align: bottom;
+}
+.w .py {
+  font-size: 11px;
+  color: var(--t3);
+  font-style: italic;
+  line-height: 1.3;
+  white-space: nowrap;
+  min-height: 15px;
+}
+.w .ch {
+  font-size: 16px;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+/* Punctuation — no pinyin space needed */
+.w.punct .py { min-height: 0; font-size: 0; }
+.w.punct .ch { font-size: 16px; margin-left: -2px; }
+/* Sentence break = small gap */
+.w.brk { width: 100%; height: 0; }
+
+/* No-pinyin mode: hide py row, tighten layout */
+.passage-nopinyin .w .py { display: none; }
+.passage-nopinyin .passage-body { row-gap: 4px; }
+.passage-nopinyin .w .ch { font-size: 16px; line-height: 1.8; }
+
+/* ─── HOTS (Critical/Creative Thinking) ─── */
+.hots-box {
+  background: linear-gradient(135deg, #fdf8e8, #f9f0fb);
+  border: 1.5px solid var(--gold);
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+.hots-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--gold);
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.hots-label::before { content: '💭'; font-size: 13px; }
+.hots-prompts {
+  margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+.hots-prompt {
+  font-size: 13px;
+  color: var(--muted);
+  padding: 7px 11px;
+  background: rgba(255,255,255,0.7);
+  border-radius: 7px;
+  border-left: 3px solid var(--gold);
+  line-height: 1.5;
+}
+.hots-open-input {
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 13px 14px;
+  font-size: 15px;
+  font-family: 'Noto Serif SC', serif;
+  background: rgba(255,255,255,0.8);
+  color: var(--text);
+  outline: none;
+  resize: vertical;
+  min-height: 90px;
+  transition: border-color .15s;
+  margin-top: 12px;
+}
+.hots-open-input:focus { border-color: var(--gold); }
+.hots-submit-btn {
+  margin-top: 8px;
+  padding: 10px 20px;
+  background: var(--gold);
+  color: #fff;
+  border: none;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+}
+.hots-submitted {
+  margin-top: 10px;
+  padding: 10px 14px;
+  background: var(--correctbg);
+  color: var(--correct);
+  border-radius: 9px;
+  font-size: 13px;
+  display: none;
+}
+
+/* feedback */
+.feedback { margin-top: 10px; padding: 10px 14px; border-radius: 9px; font-size: 13px; display: none; }
+.feedback.show { display: block; }
+.feedback.ok { background: var(--correctbg); color: var(--correct); }
+.feedback.bad { background: var(--wrongbg); color: var(--wrong); }
+
+.next-btn { display: none; width: 100%; padding: 13px; background: var(--card); border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; color: var(--text); margin-top: 10px; transition: all .12s; }
+.next-btn:hover { border-color: var(--text); }
+
+/* ─── HINT (hidden by default, click to reveal) ─── */
+.hint-toggle { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--muted); background: var(--bg); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; cursor: pointer; margin-top: 8px; margin-bottom: 12px; transition: all .15s; user-select: none; }
+.hint-toggle:hover { border-color: #aaa; color: var(--text); }
+.hint-toggle .ht-arrow { font-size: 10px; transition: transform .2s; }
+.hint-toggle.open .ht-arrow { transform: rotate(180deg); }
+.hint-body { display: none; font-size: 12px; color: var(--muted); padding: 8px 12px; background: var(--bg); border-radius: 8px; border-left: 3px solid var(--border); margin-bottom: 12px; line-height: 1.5; }
+.hint-body.show { display: block; }
+
+/* ─── PINYIN TOGGLE (reading passages) ─── */
+.pinyin-toggle-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.pinyin-toggle-label { font-size: 11px; font-weight: 600; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; }
+.pinyin-switch { position: relative; display: inline-block; width: 38px; height: 22px; }
+.pinyin-switch input { opacity: 0; width: 0; height: 0; }
+.pinyin-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background: var(--border); border-radius: 22px; transition: .2s; }
+.pinyin-slider:before { position: absolute; content: ''; height: 16px; width: 16px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: .2s; }
+.pinyin-switch input:checked + .pinyin-slider { background: var(--t3); }
+.pinyin-switch input:checked + .pinyin-slider:before { transform: translateX(16px); }
+
+/* ─── RESULT SCREEN ─── */
+.result { display: none; max-width: 620px; margin: 0 auto; padding: 2rem 1.5rem; text-align: center; }
+.result-ring { width: 110px; height: 110px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.25rem; font-size: 36px; font-weight: 700; }
+.ring-t1 { background: var(--t1l); color: var(--t1); border: 3px solid var(--t1m); }
+.ring-t2 { background: var(--t2l); color: var(--t2); border: 3px solid var(--t2m); }
+.ring-t3 { background: var(--t3l); color: var(--t3); border: 3px solid var(--t3m); }
+.result h2 { font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+.result .r-sub { font-size: 14px; color: var(--muted); margin-bottom: 1.5rem; }
+.stars { font-size: 30px; margin-bottom: 1rem; letter-spacing: 4px; }
+.result-msg { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1rem 1.25rem; font-size: 14px; text-align: left; line-height: 1.7; margin-bottom: 1.25rem; color: var(--text); }
+.result-msg strong { font-weight: 600; }
+.result-btns { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin-bottom: 1.5rem; }
+.btn-retry { padding: 12px 28px; background: var(--text); color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; }
+.btn-back { padding: 12px 28px; background: var(--card); border: 1.5px solid var(--border); border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; color: var(--text); }
+.btn-review { padding: 12px 28px; background: var(--t3l); border: 1.5px solid var(--t3m); border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; color: var(--t3); }
+.btn-download { padding: 12px 28px; background: var(--t2l); border: 1.5px solid var(--t2m); border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; color: var(--t2); }
+.btn-print { padding: 12px 28px; background: #f3e8ff; border: 1.5px solid #c4b5fd; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; color: #6d28d9; }
+.btn-print:hover { opacity: .88; }
+
+/* ─── ANSWER REVIEW PANEL ─── */
+.review-panel { display: none; text-align: left; margin-top: 1rem; }
+.review-panel h3 { font-size: 15px; font-weight: 600; margin-bottom: 12px; color: var(--text); }
+.review-item { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; margin-bottom: 8px; font-size: 13px; line-height: 1.6; }
+.review-item .ri-q { color: var(--muted); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 4px; }
+.review-item .ri-stem { font-size: 14px; margin-bottom: 6px; }
+.review-item .ri-answer { display: flex; gap: 10px; flex-wrap: wrap; }
+.ri-tag { padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+.ri-correct { background: var(--correctbg); color: var(--correct); }
+.ri-wrong { background: var(--wrongbg); color: var(--wrong); }
+.ri-open { background: var(--t3l); color: var(--t3); }
+.ri-user { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+
+/* ─── MOBILE DROPDOWNS (hidden on desktop) ─── */
+.mobile-select-wrap { display: none; }
+
+/* ─── STUDENT INFO SCREEN ─── */
+.student-info-screen { display: none; max-width: 580px; margin: 0 auto; padding: 3rem 1.5rem; }
+.si-card { background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 2rem 2rem 1.75rem; }
+.si-title { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+.si-subtitle { font-size: 13px; color: var(--muted); margin-bottom: 1.75rem; }
+.si-field { margin-bottom: 1rem; }
+.si-label { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; margin-bottom: 6px; display: block; }
+.si-input { width: 100%; border: 1.5px solid var(--border); border-radius: 10px; padding: 13px 16px; font-size: 16px; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); outline: none; transition: border-color .15s; }
+.si-input:focus { border-color: var(--text); background: var(--card); }
+.si-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+@media (max-width: 520px) { .si-row { grid-template-columns: 1fr; } }
+.si-note { font-size: 12px; color: var(--muted); margin-top: 0.75rem; line-height: 1.5; padding: 10px 12px; background: var(--bg); border-radius: 8px; }
+.si-start-btn { width: 100%; margin-top: 1.5rem; padding: 16px; background: var(--text); color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; display: flex; align-items: center; justify-content: center; gap: 10px; transition: opacity .15s; }
+.si-start-btn:hover { opacity: .88; }
+.si-back-link { text-align: center; margin-top: 1rem; font-size: 13px; color: var(--muted); cursor: pointer; text-decoration: underline; }
+.si-back-link:hover { color: var(--text); }
+
+/* ─── SOUND TOGGLE ─── */
+.sound-toggle-wrap { display: none; /* hidden; button moved into quiz-header */ }
+.sound-toggle-btn { background: none; border: 1.5px solid var(--border); border-radius: 20px; padding: 5px 12px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; color: var(--muted); transition: all .15s; display: flex; align-items: center; gap: 5px; }
+.sound-toggle-btn:hover { border-color: #aaa; color: var(--text); }
+
+/* ─── ANALYTICS PANEL (replaces review-panel) ─── */
+.analytics-panel { text-align: left; margin-top: 1.5rem; }
+.analytics-section { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.25rem 1.5rem; margin-bottom: 1rem; }
+.analytics-section-title { font-size: 13px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--muted); margin-bottom: 1rem; display: flex; align-items: center; gap: 7px; }
+.analytics-q-row { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); }
+.analytics-q-row:last-child { border-bottom: none; }
+.analytics-q-icon { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; flex-shrink: 0; margin-top: 1px; }
+.aq-correct { background: var(--correctbg); color: var(--correct); }
+.aq-wrong { background: var(--wrongbg); color: var(--wrong); }
+.aq-open { background: var(--t3l); color: var(--t3); }
+.analytics-q-body { flex: 1; }
+.analytics-q-num { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }
+.analytics-q-stem { font-size: 14px; line-height: 1.5; margin-bottom: 4px; }
+.analytics-q-ans { display: flex; flex-wrap: wrap; gap: 6px; font-size: 12px; }
+.aq-tag { padding: 2px 9px; border-radius: 20px; font-weight: 600; }
+.aq-right-tag { background: var(--correctbg); color: var(--correct); }
+.aq-wrong-tag { background: var(--wrongbg); color: var(--wrong); }
+.aq-user-tag { background: var(--bg); color: var(--text); border: 1px solid var(--border); }
+.strength-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.strength-label { font-size: 13px; min-width: 90px; color: var(--text); }
+.strength-track { flex: 1; height: 10px; background: var(--border); border-radius: 5px; overflow: hidden; }
+.strength-fill-correct { height: 100%; background: var(--correct); border-radius: 5px; }
+.strength-fill-wrong { height: 100%; background: var(--wrong); border-radius: 5px; }
+.analytics-insight { font-size: 13px; line-height: 1.7; color: var(--text); }
+.analytics-insight strong { color: var(--t1); }
+.remedial-q { background: var(--bg); border: 1.5px solid var(--border); border-radius: 10px; padding: 14px 16px; margin-bottom: 10px; }
+.remedial-q-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .07em; color: var(--t1); margin-bottom: 6px; }
+.remedial-q-stem { font-size: 15px; font-family: 'Noto Serif SC', serif; line-height: 1.5; margin-bottom: 10px; }
+.remedial-choices { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+@media (max-width: 500px) { .remedial-choices { grid-template-columns: 1fr; } }
+.remedial-choice { padding: 9px 12px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 13px; font-family: 'Noto Serif SC', serif; background: var(--card); cursor: pointer; display: flex; gap: 8px; transition: all .12s; }
+.remedial-choice:hover { border-color: #999; }
+.remedial-choice.rc-correct { background: var(--correctbg); border-color: var(--correct); color: var(--correct); }
+.remedial-choice.rc-wrong { background: var(--wrongbg); border-color: var(--wrong); color: var(--wrong); }
+.remedial-choice:disabled { cursor: default; }
+.btn-download-remedial { padding: 12px 28px; background: #fff7e6; border: 1.5px solid var(--gold); border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; color: #92700a; }
+.btn-download-remedial:hover { opacity: .88; }
+
+/* ─── STUDENT SURVEY (result page bottom) ─── */
+.student-survey { max-width: 860px; margin: 2rem auto 0; padding: 0 1.5rem 3rem; }
+.survey-card { background: var(--card); border: 1.5px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 1.75rem 2rem; }
+.survey-header { display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; }
+.survey-icon { width: 38px; height: 38px; border-radius: 10px; background: linear-gradient(135deg,var(--t2) 0%,var(--t3) 100%); display: flex; align-items: center; justify-content: center; font-size: 19px; flex-shrink: 0; }
+.survey-title { font-size: 16px; font-weight: 600; }
+.survey-subtitle { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.survey-divider { border: none; border-top: 1.5px solid var(--border); margin: 1rem 0; }
+.survey-q { margin-bottom: 1.25rem; }
+.survey-q-label { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 8px; display: flex; gap: 5px; }
+.survey-required { color: var(--wrong); }
+.survey-options { display: flex; flex-wrap: wrap; gap: 7px; }
+.survey-option { padding: 7px 15px; border: 1.5px solid var(--border); border-radius: 20px; font-size: 13px; cursor: pointer; background: var(--bg); color: var(--text); transition: all .12s; user-select: none; }
+.survey-option:hover { border-color: #aaa; }
+.survey-option.selected { border-color: var(--t2); background: var(--t2l); color: var(--t2); font-weight: 600; }
+.survey-option.multi.selected { border-color: var(--t3); background: var(--t3l); color: var(--t3); font-weight: 600; }
+.survey-scale { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.survey-scale-label { font-size: 11px; color: var(--muted); }
+.survey-scale-btn { width: 38px; height: 38px; border: 1.5px solid var(--border); border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; background: var(--bg); color: var(--text); display: flex; align-items: center; justify-content: center; transition: all .12s; }
+.survey-scale-btn:hover { border-color: #aaa; }
+.survey-scale-btn.selected { border-color: var(--t2); background: var(--t2); color: #fff; }
+.survey-textarea { width: 100%; border: 1.5px solid var(--border); border-radius: 10px; padding: 11px 14px; font-size: 14px; font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); outline: none; resize: vertical; min-height: 80px; transition: border-color .15s; }
+.survey-textarea:focus { border-color: #999; background: var(--card); }
+.survey-submit-btn { width: 100%; padding: 14px; background: var(--t2); color: #fff; border: none; border-radius: 12px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: 'DM Sans', sans-serif; margin-top: 0.5rem; transition: opacity .15s; }
+.survey-submit-btn:hover { opacity: .88; }
+.survey-toggle-arrow { font-size: 14px; color: var(--muted); transition: transform .25s; flex-shrink: 0; margin-left: 4px; }
+.survey-toggle-header:hover .survey-title { color: var(--t2); }
+.survey-toggle-header { border-radius: 8px; padding: 4px; margin: -4px; transition: background .12s; }
+.survey-toggle-header:hover { background: var(--bg); }
+.survey-thanks { display: none; text-align: center; padding: 1.5rem 0 0.5rem; font-size: 15px; font-weight: 600; color: var(--correct); font-family: 'Noto Serif SC', serif; }
+.survey-thanks span { display: block; font-family: 'DM Sans', sans-serif; font-size: 12px; color: var(--muted); font-weight: 400; margin-top: 4px; }
+
+/* ─── MOBILE RESPONSIVE ─── */
+@media (max-width: 600px) {
+  /* Setup screen */
+  .setup { padding: 1.25rem 1rem; }
+  .brand h1 { font-size: 14px; }
+  .brand p { font-size: 11px; }
+
+  /* Keep grids visible on all screen sizes; dropdowns are supplemental */
+  .lesson-grid { display: grid; }
+  .tier-grid { display: grid; }
+  .mobile-select-wrap { display: block; margin-bottom: 1.25rem; }
+  .mobile-select {
+    width: 100%;
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+    font-size: 15px;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    background: var(--card);
+    outline: none;
+    appearance: none;
+    -webkit-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%237a7570' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    cursor: pointer;
+  }
+  .mobile-select:focus { border-color: #999; }
+
+  /* Tier grid: stack to single column on very small, 1-col stacked */
+  .tier-grid { grid-template-columns: 1fr; gap: 8px; }
+  .tier-card { padding: 12px; }
+  .tier-card .tc-cn { font-size: 14px; }
+  .tier-card .tc-desc { font-size: 11px; }
+
+  /* Quiz screen */
+  .quiz { padding: 1rem 0.875rem; }
+  .quiz-header { flex-wrap: wrap; gap: 6px; }
+  .q-counter { flex: 1; text-align: center; }
+  .timer-wrap { font-size: 13px; }
+
+  /* Question card */
+  .q-card { padding: 1rem; }
+  .q-stem { font-size: 19px; }
+
+  /* MC options: single column on mobile */
+  .options-grid { grid-template-columns: 1fr; }
+  .opt-btn { font-size: 15px; padding: 12px 13px; }
+  .opt-text { font-size: 16px; }
+
+  /* Match: single column stacked */
+  .match-wrap { grid-template-columns: 1fr; gap: 8px; }
+  .match-item { font-size: 15px; padding: 10px 12px; }
+
+  /* Fill input */
+  .fill-input { font-size: 17px; }
+
+  /* Reading passage */
+  .reading-passage { padding: 12px 14px; }
+  .w .ch { font-size: 15px; }
+  .w .py { font-size: 10px; }
+
+  /* Result screen */
+  .result { padding: 1.25rem 1rem; }
+  .result-btns { flex-direction: column; align-items: stretch; gap: 8px; }
+  .result-btns button { width: 100%; text-align: center; }
+  .result h2 { font-size: 19px; }
+  .result-ring { width: 90px; height: 90px; font-size: 28px; }
+
+  /* Feedback card */
+  .feedback-card { padding: 1.25rem 1rem 1rem; }
+  .feedback-bottom { flex-direction: column; align-items: stretch; }
+  .feedback-submit { width: 100%; text-align: center; padding: 12px; }
+}
+
+/* ─── VOCAB GLOSS BOX (above-level words in reading) ─── */
+.vocab-gloss {
+  background: #fffbea;
+  border: 1.5px solid #e8d87a;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-top: 8px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  color: #5a4e00;
+}
+.vocab-gloss-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: #b89a00;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+.vocab-gloss-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+.vocab-gloss-item {
+  white-space: nowrap;
+}
+.vocab-gloss-item .vg-word {
+  font-family: 'Noto Serif SC', serif;
+  font-weight: 600;
+  font-size: 14px;
+  color: #3a3000;
+  margin-right: 3px;
+}
+.vocab-gloss-item .vg-level {
+  font-size: 10px;
+  background: #e8d87a;
+  color: #5a4e00;
+  border-radius: 3px;
+  padding: 1px 4px;
+  font-weight: 700;
+  margin-right: 3px;
+}
+.vocab-gloss-item .vg-meaning {
+  color: #6b5c00;
+}
+</style>
+</head>
+<body>
+
+<!-- ═══════════════ SETUP ═══════════════ -->
+<div class="setup" id="setup">
+  <div class="brand">
+    <div class="brand-icon">跨</div>
+    <div>
+      <h1>跨越丝路分层习题生成器 · 3B</h1>
+      <p>Across the Silk Route · Book 3B · All 6 Lessons · Based on CCG &amp; HSK 3.0</p>
+    </div>
+  </div>
+  <div class="section-label">1 · Select lesson 选择课时</div>
+  <div class="lesson-grid" id="lessonGrid">
+    <div class="lesson-card active" id="lc0" onclick="selectLesson(0)"><div class="lc-num">Lesson 1</div><div class="lc-title">你弹得真好！</div><div class="lc-cn">技能水平1</div></div>
+    <div class="lesson-card" id="lc1" onclick="selectLesson(1)"><div class="lc-num">Lesson 2</div><div class="lc-title">她说汉语说得很好。</div><div class="lc-cn">技能水平2</div></div>
+    <div class="lesson-card" id="lc2" onclick="selectLesson(2)"><div class="lc-num">Lesson 3</div><div class="lc-title">别担心，我帮你复习。</div><div class="lc-cn">关心</div></div>
+    <div class="lesson-card" id="lc3" onclick="selectLesson(3)"><div class="lc-num">Lesson 4</div><div class="lc-title">我们一起去哈利法塔吧。</div><div class="lc-cn">建议</div></div>
+    <div class="lesson-card" id="lc4" onclick="selectLesson(4)"><div class="lc-num">Lesson 5</div><div class="lc-title">哈利法塔晚上最漂亮。</div><div class="lc-cn">事情先后顺序</div></div>
+    <div class="lesson-card" id="lc5" onclick="selectLesson(5)"><div class="lc-num">Lesson 6</div><div class="lc-title">春节要到了。</div><div class="lc-cn">节日</div></div>
+  </div>
+  <div class="mobile-select-wrap" id="lessonSelectWrap">
+    <select class="mobile-select" id="lessonSelect" onchange="selectLesson(parseInt(this.value))" onchange="selectLesson(parseInt(this.value))">
+      <option value="0">Lesson 1 · 你弹得真好！(Skill Level 1)</option>
+      <option value="1">Lesson 2 · 她说汉语说得很好。(Skill Level 2)</option>
+      <option value="2">Lesson 3 · 别担心，我帮你复习。(Showing Care)</option>
+      <option value="3">Lesson 4 · 我们一起去哈利法塔吧。(Making Suggestions)</option>
+      <option value="4">Lesson 5 · 哈利法塔晚上最漂亮。(Sequence of Events)</option>
+      <option value="5">Lesson 6 · 春节要到了。(Festivals)</option>
+    </select>
+  </div>
+  <div class="section-label">2 · Select mastery tier 选择分层</div>
+  <div class="mobile-select-wrap" id="tierSelectWrap">
+    <select class="mobile-select" id="tierSelect" onchange="setTier(parseInt(this.value))" onchange="setTier(parseInt(this.value))">
+      <option value="0">Tier 1 · 迈向掌握 — Core vocabulary &amp; sentence patterns</option>
+      <option value="1">Tier 2 · 达到掌握 — Sentence usage + HSK 2/3 grammar</option>
+      <option value="2">Tier 3 · 深度掌握 — Extended + reading + critical thinking</option>
+    </select>
+  </div>
+  <div class="tier-grid" id="tierGrid">
+    <div class="tier-card t1 active" id="tc0" onclick="setTier(0)">
+      <div class="tc-level"><span class="tier-dot"></span>Tier 1</div>
+      <div class="tc-cn">迈向掌握</div>
+      <div class="tc-desc">10 questions · Core vocabulary &amp; sentence patterns · Working toward mastery</div>
+    </div>
+    <div class="tier-card t2" id="tc1" onclick="setTier(1)">
+      <div class="tc-level"><span class="tier-dot"></span>Tier 2</div>
+      <div class="tc-cn">达到掌握</div>
+      <div class="tc-desc">10 questions · Sentence usage + HSK 3 grammar · Working at mastery</div>
+    </div>
+    <div class="tier-card t3" id="tc2" onclick="setTier(2)">
+      <div class="tc-level"><span class="tier-dot"></span>Tier 3</div>
+      <div class="tc-cn">深度掌握</div>
+      <div class="tc-desc">10 questions · 5 extended + 4 reading comprehension + 1 critical thinking · Mastery with depth</div>
+    </div>
+  </div>
+  <button class="start-btn" id="startBtn" onclick="goToStudentInfo()">
+    <span class="sb-cn">开始练习</span> · Start Quiz →
+  </button>
+  <p style="text-align:right; margin-top:1.5rem; font-size:11px; color:var(--muted); font-family:'DM Sans',sans-serif; opacity:0.7;">Designed by Sun Hao</p>
+</div>
+
+<!-- ═══════════════ STUDENT INFO SCREEN ═══════════════ -->
+<div class="student-info-screen" id="studentInfoScreen">
+  <div class="si-card">
+    <div class="si-title">🎒 学生信息 · Student Info</div>
+    <div class="si-subtitle">请填写以下信息，方便老师了解你的学习情况。Your info helps your teacher track your progress.</div>
+    <div class="si-field">
+      <label class="si-label">姓名 Full Name <span style="color:var(--wrong)">*</span></label>
+      <input class="si-input" id="si_name" type="text" placeholder="Your full name / 你的姓名" autocomplete="name">
+    </div>
+    <div class="si-row">
+      <div class="si-field">
+        <label class="si-label">班级 Class <span style="color:var(--wrong)">*</span></label>
+        <input class="si-input" id="si_class" type="text" placeholder="e.g. 7A, Grade 8B">
+      </div>
+      <div class="si-field">
+        <label class="si-label">学校 School</label>
+        <input class="si-input" id="si_school" type="text" placeholder="School name / 学校名称">
+      </div>
+    </div>
+    <div class="si-note">ℹ️ 姓名和班级为必填项。信息仅用于学情记录，不作其他用途。<br>Name and class are required. Info is used for learning records only.</div>
+    <button class="si-start-btn" id="siStartBtn" onclick="confirmStudentInfo()">
+      <span style="font-family:'Noto Serif SC',serif;">确认并开始</span> · Confirm &amp; Start →
+    </button>
+    <div class="si-back-link" id="siBackLink" onclick="backToSetup()">← 返回 · Back to settings</div>
+  </div>
+</div>
+
+<!-- ═══════════════ QUIZ ═══════════════ -->
+<div class="quiz" id="quizScreen">
+  <div class="quiz-header">
+    <span class="tier-badge" id="qBadge">Tier 1</span>
+    <span class="q-counter" id="qCounter">1 / 10</span>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <button class="sound-toggle-btn" onclick="toggleSound()" id="soundBtn">🔊 Sound ON</button>
+      <button class="exit-btn" onclick="exitQuiz()" title="返回设置 Back to Setting">← 返回设置 Back to Setting</button>
+    </div>
+    <div class="timer-wrap" id="timerWrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      <span id="timerDisplay">15:00</span>
+    </div>
+  </div>
+  <div class="progress"><div class="progress-fill" id="progressFill"></div></div>
+  <div id="qMount"></div>
+</div>
+
+<!-- ═══════════════ RESULT ═══════════════ -->
+<div class="result" id="resultScreen">
+  <div class="result-ring" id="rRing"></div>
+  <h2 id="rTitle">Well done!</h2>
+  <p class="r-sub" id="rSub"></p>
+  <div class="stars" id="rStars"></div>
+  <div class="result-msg" id="rMsg"></div>
+  <div class="result-btns">
+    <button class="btn-retry" onclick="retry()">再试一次 Retry</button>
+    <button class="btn-download" onclick="downloadAnswers()">⬇ 下载答案 Download</button>
+    <button class="btn-download-remedial" onclick="downloadRemedial()">📥 下载补弱练习 Remedial</button>
+    <button class="btn-print" onclick="printWorksheet()">🖨 下载试卷 Print PDF</button>
+    <button class="btn-back" onclick="goBack()">← Change settings</button>
+  </div>
+  <div class="analytics-panel" id="analyticsPanel"></div>
+</div>
+
+<!-- ═══════════════ STUDENT SURVEY ═══════════════ -->
+<div class="student-survey" id="studentSurveyWrap" style="display:none;">
+  <div class="survey-card">
+    <div class="survey-toggle-header" onclick="toggleSurveyBody()" id="surveyToggleHeader">
+      <div class="survey-header" style="margin-bottom:0; cursor:pointer;">
+        <div class="survey-icon">📝</div>
+        <div style="flex:1;">
+          <div class="survey-title">学生反馈问卷 · Student Feedback Survey</div>
+          <div class="survey-subtitle">点击展开 · 帮助老师改进课堂，只需2分钟 · Click to expand</div>
+        </div>
+        <span class="survey-toggle-arrow" id="surveyArrow">▼</span>
+      </div>
+    </div>
+    <div id="surveyBody" style="display:none;">
+      <hr class="survey-divider">
+      <div class="survey-q" id="sq1">
+        <div class="survey-q-label">1. 你觉得这个分层练习怎么样？How do you find this tiered quiz overall? <span class="survey-required">*</span></div>
+        <div class="survey-scale">
+          <span class="survey-scale-label">很差 Poor</span>
+          <button class="survey-scale-btn" onclick="selectScale('sq1',1)">1</button>
+          <button class="survey-scale-btn" onclick="selectScale('sq1',2)">2</button>
+          <button class="survey-scale-btn" onclick="selectScale('sq1',3)">3</button>
+          <button class="survey-scale-btn" onclick="selectScale('sq1',4)">4</button>
+          <button class="survey-scale-btn" onclick="selectScale('sq1',5)">5</button>
+          <span class="survey-scale-label">很好 Excellent</span>
+        </div>
+      </div>
+      <div class="survey-q" id="sq2">
+        <div class="survey-q-label">2. 这个练习是否有针对性？Does this practice feel targeted to your level? <span class="survey-required">*</span></div>
+        <div class="survey-options">
+          <span class="survey-option" onclick="selectSingle('sq2',this)">非常有针对性 Very targeted</span>
+          <span class="survey-option" onclick="selectSingle('sq2',this)">比较有针对性 Fairly targeted</span>
+          <span class="survey-option" onclick="selectSingle('sq2',this)">一般 So-so</span>
+          <span class="survey-option" onclick="selectSingle('sq2',this)">针对性不强 Not very targeted</span>
+        </div>
+      </div>
+      <div class="survey-q" id="sq3">
+        <div class="survey-q-label">3. 对你的HSK考试是否有帮助？Does this help with your HSK preparation? <span class="survey-required">*</span></div>
+        <div class="survey-options">
+          <span class="survey-option" onclick="selectSingle('sq3',this)">很有帮助 Very helpful</span>
+          <span class="survey-option" onclick="selectSingle('sq3',this)">有些帮助 Somewhat helpful</span>
+          <span class="survey-option" onclick="selectSingle('sq3',this)">帮助不大 Not much help</span>
+          <span class="survey-option" onclick="selectSingle('sq3',this)">没有帮助 Not helpful</span>
+        </div>
+      </div>
+      <div class="survey-q" id="sq4">
+        <div class="survey-q-label">4. 对掌握学习重点是否有帮助？Does it help you master the key learning points? <span class="survey-required">*</span></div>
+        <div class="survey-options">
+          <span class="survey-option" onclick="selectSingle('sq4',this)">非常有帮助 Very much</span>
+          <span class="survey-option" onclick="selectSingle('sq4',this)">有帮助 Helpful</span>
+          <span class="survey-option" onclick="selectSingle('sq4',this)">一般 Average</span>
+          <span class="survey-option" onclick="selectSingle('sq4',this)">帮助不大 Not much</span>
+        </div>
+      </div>
+      <div class="survey-q" id="sq5">
+        <div class="survey-q-label">5. 你最不喜欢哪种题型？Which question type do you like LEAST? <span class="survey-required">*</span></div>
+        <div class="survey-options">
+          <span class="survey-option" onclick="selectSingle('sq5',this)">选择题 Multiple Choice</span>
+          <span class="survey-option" onclick="selectSingle('sq5',this)">填空题 Fill-in</span>
+          <span class="survey-option" onclick="selectSingle('sq5',this)">连线题 Matching</span>
+          <span class="survey-option" onclick="selectSingle('sq5',this)">阅读题 Reading</span>
+          <span class="survey-option" onclick="selectSingle('sq5',this)">思维题 HOTS</span>
+        </div>
+      </div>
+      <div class="survey-q" id="sq6">
+        <div class="survey-q-label">6. 你最喜欢哪种题型？Which question type do you like MOST? <span class="survey-required">*</span></div>
+        <div class="survey-options">
+          <span class="survey-option" onclick="selectSingle('sq6',this)">选择题 Multiple Choice</span>
+          <span class="survey-option" onclick="selectSingle('sq6',this)">填空题 Fill-in</span>
+          <span class="survey-option" onclick="selectSingle('sq6',this)">连线题 Matching</span>
+          <span class="survey-option" onclick="selectSingle('sq6',this)">阅读题 Reading</span>
+          <span class="survey-option" onclick="selectSingle('sq6',this)">思维题 HOTS</span>
+        </div>
+      </div>
+      <div class="survey-q">
+        <div class="survey-q-label">7. 你还有什么意见和建议？（选填）Any other suggestions? <span style="color:var(--muted);font-weight:400;">Optional</span></div>
+        <textarea class="survey-textarea" id="survey_suggestions" placeholder="请写下你的想法 / Share your thoughts here…"></textarea>
+      </div>
+      <div id="surveyForm_submit">
+        <button class="survey-submit-btn" onclick="submitStudentSurvey()">提交反馈 Submit Feedback 📤</button>
+      </div>
+      <div class="survey-thanks" id="surveyThanks">
+        🎉 感谢你的反馈！Thank you for your feedback!
+        <span>老师会认真阅读你的意见，帮助改进课堂练习。Your teacher will review your responses. 🙏</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════════
+// DATA — 跨越丝路 3B · 6 Lessons · HSK 3
+// ══════════════════════════════════════════════════════════════════
+const LESSONS = [
+
+// LESSON 1 · 你弹得真好！技能水平1
+{ id:'3B-L1', num:'Lesson 1', title:'你弹得真好！Skill Level 1', cn:'技能水平1',
+  tiers:[
+  { qs:[
+    { type:'mc', stem:'<span class="cn">你弹得真好！</span> means:', choices:['You play really well!','You play the piano.','Do you like playing?','You are very good at singing.'], ans:0, hint:'弹=play (a string instrument/piano); 得=structural particle; 真好=really great' },
+    { type:'mc', stem:'Which word means "to play basketball"?', choices:['打篮球','打网球','打乒乓球','游泳'], ans:0, hint:'打篮球=play basketball; 篮球=basketball' },
+    { type:'mc', stem:'<span class="cn">游泳</span> means:', choices:['swimming','running','badminton','dancing'], ans:0, hint:'游=swim; 泳=swimming; 游泳=to swim' },
+    { type:'mc', stem:'<span class="cn">不错</span> means:', choices:['not bad / pretty good','not good','very bad','incorrect'], ans:0, hint:'不错: 不=not, 错=wrong → \"not bad\" = pretty good (positive!)' },
+    { type:'mc', stem:'<span class="cn">一般</span> means:', choices:['so-so / average','excellent','terrible','perfect'], ans:0, hint:'一般=average, ordinary, so-so — neither great nor bad' },
+    { type:'mc', stem:'Which word means "true / real"?', choices:['真','打','弹','一'], ans:0, hint:'真=really/truly; 真好=really good; 真的=really?' },
+    { type:'fill', stem:'Complete: <span class="cn">我打乒乓球打得＿＿＿！</span> (I play table tennis really well!)', ans:['真好','不错','很好'], hint:'真好=really well; state complement pattern: verb+得+complement' },
+    { type:'match', stem:'Match sports/activities to meanings', left:['打篮球','打网球','打乒乓球','游泳'], right:['play basketball','play tennis','play table tennis','swim'], pairs:[[0,0],[1,1],[2,2],[3,3]], hint:'打+ball sport = play that sport; 游泳=swim' },
+    { type:'mc', stem:'Which sentence correctly says "She sings really well"?', choices:['她唱歌唱得真好。','她唱歌真好唱得。','唱得真好她唱歌。','她真好唱歌唱得。'], ans:0, hint:'Pattern: Subject + Verb + Object + Verb + 得 + Complement' },
+    { type:'fill', stem:'Ask how well someone plays the piano: <span class="cn">你钢琴弹得＿＿＿？</span>', ans:['怎么样','好不好'], hint:'怎么样=how/how about; used to ask about quality or degree' },
+  ]},
+  { qs:[
+    { type:'mc', stem:'In <span class="cn">你弹得真好</span>, what is the grammar structure?', choices:['状态补语1: 动词+得+形容词性短语 (state complement)','结果补语 (result complement)','趋向补语 (directional complement)','可能补语 (potential complement)'], ans:0, hint:'HSK2 状态补语1: Verb + 得 + adj phrase — describes how an action is performed' },
+    { type:'mc', stem:'The verb "弹" in <span class="cn">你弹得真好</span> specifically means:', choices:['to play (a stringed/keyboard instrument)','to play (a ball sport)','to sing','to dance'], ans:0, hint:'弹=play string/keyboard instrument (guitar, piano, erhu); 打=play ball sports' },
+    { type:'fill', stem:'Use 状态补语: "He runs very fast." <span class="cn">他跑步跑得＿＿＿。</span>', ans:['很快','非常快'], hint:'跑步跑得很快: verb+得+complement of manner' },
+    { type:'mc', stem:'<span class="cn">不错</span> is grammatically:', choices:['形容词 (adjective expressing positive evaluation)','副词 (adverb)','量词 (measure word)','动词 (verb)'], ans:0, hint:'不错=adjective; can be used as predicate: 你唱歌唱得不错' },
+    { type:'mc', stem:'Which correctly says "Ali swims pretty well"?', choices:['阿里游泳游得不错。','阿里游泳不错游得。','游得不错阿里游泳。','阿里得游泳游不错。'], ans:0, hint:'Pattern: Subject + Verb + Object + Verb + 得 + Complement' },
+    { type:'mc', stem:'Culture: 中国民族音乐 (Chinese folk music). Which instrument is a plucked string instrument?', choices:['二胡 (erhu) is bowed; 古筝 (guzheng) is plucked','All Chinese instruments are percussion','只有钢琴 is traditional Chinese','No Chinese plucked instruments exist'], ans:0, hint:'古筝=plucked zither; 二胡=two-string bowed fiddle; both are traditional 民族乐器' },
+    { type:'fill', stem:'Complete: <span class="cn">她汉语说得＿＿＿好。</span>', ans:['真','很','非常','特别'], hint:'真/很/非常/特别 all intensify the complement: 说得真好' },
+    { type:'match', stem:'Match skill levels to expressions', left:['真好','不错','一般','不太好'], right:['really great','pretty good','so-so','not very good'], pairs:[[0,0],[1,1],[2,2],[3,3]], hint:'Chinese scale for evaluating skills from excellent to poor' },
+    { type:'reading',
+      passage:'阿里学了两年钢琴，他弹得很好。上周，学校举办了一场音乐会，阿里在音乐会上弹了一首中国民间音乐——《茉莉花》。小明很惊讶，说："你弹得真好！你是怎么学的？"阿里说："我每天练习一个小时。"小明说："我也想学乐器，可是我觉得很难。"阿里说："只要努力练习，一定能学好！"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'How long has Ali been learning the piano?',
+      choices:['Two years (两年)','One year','Three years','Since childhood'],
+      ans:0, hint:'阿里学了两年钢琴' },
+    { type:'reading',
+      passage:'阿里学了两年钢琴，他弹得很好。上周，学校举办了一场音乐会，阿里在音乐会上弹了一首中国民间音乐——《茉莉花》。小明很惊讶，说："你弹得真好！你是怎么学的？"阿里说："我每天练习一个小时。"小明说："我也想学乐器，可是我觉得很难。"阿里说："只要努力练习，一定能学好！"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What does Ali say is the key to learning well?',
+      choices:['Practise hard every day (努力练习)','Natural talent','Good teachers','Expensive instruments'],
+      ans:0, hint:'只要努力练习，一定能学好！' },
+  ]},
+  { qs:[
+    { type:'mc', stem:'Compare <span class="cn">你弹得真好</span> vs <span class="cn">你弹钢琴弹得真好</span>. Which is more complete grammatically?', choices:['Second is more explicit — repeating the verb makes the object clear','Both are identical','First is wrong','得 is not needed'], ans:0, hint:'When the verb has an object, repeat verb: S+V+O+V+得+Complement' },
+    { type:'mc', stem:'HSK3 grammar: 状态补语1 vs 可能补语1. Key difference?', choices:['状态补语: actual manner (弹得很好); 可能补语: potential (弹得好=can play well)','Identical','可能补语 needs 很','状态补语 is for questions only'], ans:0, hint:'得很好=state complement (how it WAS done); 得好/不好=potential (CAN/CANNOT do well)' },
+    { type:'fill', stem:'"She dances beautifully." <span class="cn">她舞蹈跳得＿＿＿＿。</span>', ans:['很漂亮','非常漂亮','真漂亮'], hint:'跳+舞蹈+跳得+complement; 漂亮=beautiful' },
+    { type:'mc', stem:'Culture: 《茉莉花》(Jasmine Flower) is a famous Chinese folk song. It is significant because:', choices:['It represents Chinese folk music internationally and was played at Beijing Olympics 2008','It was written by a famous emperor','It is a modern pop song','It is the Chinese national anthem'], ans:0, hint:'茉莉花 is China\'s most internationally known folk song — performed at 2008 Olympics opening' },
+    { type:'mc', stem:'<span class="cn">只要……就……</span> in "只要努力练习，就能学好" expresses:', choices:['条件复句 (conditional): as long as… then…','目的复句 (purpose)','转折复句 (concession)','因果复句 (cause-effect)'], ans:0, hint:'只要……就…… = HSK3 条件复句: as long as X, then Y will follow' },
+    { type:'reading',
+      passage:'法蒂玛是阿联酋学生，她在学校选修了中国音乐课。她学会了弹古筝，还学了几首中国民歌，包括《茉莉花》和《月亮代表我的心》。她的老师说她弹得不错，但是说歌词说得还不够清楚，需要继续练习发音。法蒂玛说："我每天练习半个小时，我相信只要坚持，就一定能进步！"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What does Fatima\'s teacher say she needs to improve?',
+      choices:['Her pronunciation of the lyrics (发音)','Her finger technique','Her memory of notes','Her posture'],
+      ans:0, hint:'说歌词说得还不够清楚，需要继续练习发音' },
+    { type:'reading',
+      passage:'法蒂玛是阿联酋学生，她在学校选修了中国音乐课。她学会了弹古筝，还学了几首中国民歌，包括《茉莉花》和《月亮代表我的心》。她的老师说她弹得不错，但是说歌词说得还不够清楚，需要继续练习发音。法蒂玛说："我每天练习半个小时，我相信只要坚持，就一定能进步！"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'Which Chinese songs has Fatima learnt?',
+      choices:['《茉莉花》and《月亮代表我的心》','Only《茉莉花》','《小苹果》and《茉莉花》','She has not learnt any songs'],
+      ans:0, hint:'《茉莉花》和《月亮代表我的心》' },
+    { type:'reading',
+      passage:'法蒂玛是阿联酋学生，她在学校选修了中国音乐课。她学会了弹古筝，还学了几首中国民歌，包括《茉莉花》和《月亮代表我的心》。她的老师说她弹得不错，但是说歌词说得还不够清楚，需要继续练习发音。法蒂玛说："我每天练习半个小时，我相信只要坚持，就一定能进步！"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What is Fatima\'s attitude towards learning Chinese music?',
+      choices:['Positive — she believes persistence leads to progress','Negative — it is too difficult','Neutral — she does not care','She wants to quit'],
+      ans:0, hint:'只要坚持，就一定能进步！— 坚持=persist; 进步=improve' },
+    { type:'reading',
+      passage:'法蒂玛是阿联酋学生，她在学校选修了中国音乐课。她学会了弹古筝，还学了几首中国民歌，包括《茉莉花》和《月亮代表我的心》。她的老师说她弹得不错，但是说歌词说得还不够清楚，需要继续练习发音。法蒂玛说："我每天练习半个小时，我相信只要坚持，就一定能进步！"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'How long does Fatima practise each day?',
+      choices:['Half an hour (半个小时)','One hour','Two hours','She does not practise daily'],
+      ans:0, hint:'我每天练习半个小时' },
+    { type:'hots',
+      stem:'Music is a universal language. Chinese music instruments like 古筝 (guzheng) and 二胡 (erhu) carry thousands of years of culture. In the UAE, instruments like the 乌德 (oud) are central to Emirati identity. <span class="cn">音乐是文化的声音。</span> Can learning another culture\'s music help you understand that culture better? Compare Chinese and Emirati musical traditions.',
+      prompts:['What makes 古筝 or 二胡 sound "Chinese"? What instrument sounds "Emirati" to you?','Have you ever tried playing a traditional instrument from another culture? What did you notice?','Use: 弹得……, 唱得……, ……比……更有意思 in your comparison.'],
+      hint:'Strong answers connect musical characteristics to cultural values and personal experience.' },
+  ]},
+]},
+
+// LESSON 2 · 她说汉语说得很好。技能水平2
+{ id:'3B-L2', num:'Lesson 2', title:'她说汉语说得很好。Skill Level 2', cn:'技能水平2',
+  tiers:[
+  { qs:[
+    { type:'mc', stem:'<span class="cn">她说汉语说得很好。</span> means:', choices:['She speaks Chinese very well.','She is learning Chinese well.','She wants to speak Chinese well.','She speaks Chinese every day.'], ans:0, hint:'说汉语说得很好: verb+object repeated + 得+complement = speaks Chinese very well' },
+    { type:'mc', stem:'Which word means "to run"?', choices:['跑步','考试','看到','介绍'], ans:0, hint:'跑步=run; 跑=run, 步=step' },
+    { type:'mc', stem:'<span class="cn">考试</span> means:', choices:['exam / test','introduction','study','review'], ans:0, hint:'考试=exam; 考=test/examine, 试=try' },
+    { type:'mc', stem:'<span class="cn">好听</span> means:', choices:['pleasant to listen to / sounds good','good to see','good to eat','good to read'], ans:0, hint:'好听=pleasant-sounding; 好+听(listen to)' },
+    { type:'mc', stem:'<span class="cn">能</span> in this lesson means:', choices:['can / be able to','want to','should','must'], ans:0, hint:'能=can/be able to — 能愿动词; expresses ability or possibility' },
+    { type:'mc', stem:'<span class="cn">给</span> in 给别人介绍 means:', choices:['to/for (preposition introducing recipient)','to give (as a gift)','and','from'], ans:0, hint:'给+person+verb = do something for/to someone; HSK2 preposition' },
+    { type:'fill', stem:'Complete: <span class="cn">他跑步跑得＿＿＿＿。</span> (He runs really fast.)', ans:['很快','真快','非常快'], hint:'跑步跑得很快: state complement — how fast he runs' },
+    { type:'match', stem:'Match words to meanings', left:['跑步','考试','看到','好听'], right:['to run','exam','to see/notice','pleasant to hear'], pairs:[[0,0],[1,1],[2,2],[3,3]], hint:'Lesson 2 core vocabulary' },
+    { type:'mc', stem:'Which sentence uses 得 correctly?', choices:['她唱歌唱得很好听。','她唱歌很好听得。','得她唱歌唱很好听。','她唱得歌很好听。'], ans:0, hint:'Pattern: S + Verb + Object + Verb + 得 + Complement' },
+    { type:'fill', stem:'"Her singing sounds really beautiful": <span class="cn">她唱歌唱得＿＿＿好听。</span>', ans:['很','真','非常','特别'], hint:'Intensifiers before the complement adjective: 很/真/非常/特别' },
+  ]},
+  { qs:[
+    { type:'mc', stem:'In <span class="cn">她说汉语说得很好</span>, why is the verb "说" repeated?', choices:['The verb is repeated when an object is present in the state complement pattern','It is a mistake','To emphasise frequency','说 is always doubled'], ans:0, hint:'HSK2 状态补语: if verb has an object, structure = S+V+O+V+得+Complement' },
+    { type:'mc', stem:'<span class="cn">她说汉语说得很好</span> vs <span class="cn">她说得很好</span>. Difference?', choices:['First specifies the language (汉语); second is fine if context is clear','Both are always wrong','Second is more formal','First is informal'], ans:0, hint:'Without object: 说得很好 is fine if context is clear. With object 汉语: must repeat verb.' },
+    { type:'fill', stem:'"Xiao Ming writes characters really beautifully." <span class="cn">小明写汉字写得＿＿＿＿。</span>', ans:['很漂亮','真漂亮','非常漂亮'], hint:'写汉字写得很漂亮: state complement for writing' },
+    { type:'mc', stem:'<span class="cn">能</span> vs <span class="cn">会</span>: key difference at HSK3?', choices:['能=able to (circumstantial ability); 会=know how to (learned skill)','They are identical','会 is ability; 能 is desire','能 is only for physical ability'], ans:0, hint:'会=acquired skill (会游泳=knows how to swim); 能=situational ability (能去=can go [circumstances allow])' },
+    { type:'mc', stem:'<span class="cn">跑步跑得很快</span> — 很快 functions as:', choices:['状态补语 (state complement describing manner of running)','定语 (attributive)','主语 (subject)','时间状语 (time adverbial)'], ans:0, hint:'HSK2 状态补语1: 动词+得+形容词性短语 — describes how the action is done' },
+    { type:'mc', stem:'Culture: Chinese students often have long exam preparation periods (考试周). Which subject is 汉语 closest to?', choices:['Language arts / Chinese literature and composition','Science and maths','Physical education','Music'], ans:0, hint:'汉语科 covers reading, writing, composition, and literature in Chinese schools' },
+    { type:'fill', stem:'"Ali reads Chinese characters really fast." <span class="cn">阿里看汉字看得＿＿＿＿。</span>', ans:['很快','真快','非常快'], hint:'看汉字看得很快: state complement; very + fast' },
+    { type:'match', stem:'Match state complement sentences to meanings', left:['说得很好','写得很漂亮','跑得很快','唱得很好听'], right:['speaks very well','writes very beautifully','runs very fast','sings very pleasantly'], pairs:[[0,0],[1,1],[2,2],[3,3]], hint:'State complement pattern: 动词+得+形容词' },
+    { type:'reading',
+      passage:'法蒂玛的汉语老师叫王老师。王老师说：「法蒂玛进步很大！她现在说汉语说得很好，写汉字也写得越来越漂亮。上次考试，她考得非常好。」法蒂玛听了很高兴。她说：「我每天跑步锻炼身体，也每天练习汉语。我相信，只要努力，就能学好！」小明对阿里说：「法蒂玛学汉语学得比我还努力！」',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What does Teacher Wang say about Fatima\'s Chinese?',
+      choices:['She speaks very well and her characters are getting more beautiful','She needs improvement in speaking','Her writing is poor','Her exam score was bad'],
+      ans:0, hint:'说汉语说得很好，写汉字也写得越来越漂亮' },
+    { type:'reading',
+      passage:'法蒂玛的汉语老师叫王老师。王老师说：「法蒂玛进步很大！她现在说汉语说得很好，写汉字也写得越来越漂亮。上次考试，她考得非常好。」法蒂玛听了很高兴。她说：「我每天跑步锻炼身体，也每天练习汉语。我相信，只要努力，就能学好！」小明对阿里说：「法蒂玛学汉语学得比我还努力！」',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What does Xiao Ming say about Fatima?',
+      choices:['She studies Chinese even harder than him','She is a teacher\'s pet','She dislikes running','She never practises'],
+      ans:0, hint:'法蒂玛学汉语学得比我还努力！' },
+  ]},
+  { qs:[
+    { type:'mc', stem:'Grammatical deep-dive: "她说汉语说得很好" — identify ALL grammar points used:', choices:['状态补语 (得+adj), 程度副词 (很), verb repetition pattern','Only state complement','Only degree adverb','No grammar points — it is a basic sentence'], ans:0, hint:'Multiple points: 得+adj = state complement; 很=degree adverb; verb repeated due to object' },
+    { type:'mc', stem:'HSK3 pattern: <span class="cn">越来越……</span> in 写得越来越漂亮. What does it mean?', choices:['getting more and more (progressive change)','less and less','sometimes','always'], ans:0, hint:'越来越+adj = getting increasingly [adj]; 越来越漂亮=getting more and more beautiful' },
+    { type:'fill', stem:'"His Mandarin pronunciation is getting better and better." <span class="cn">他的普通话发音说得＿＿＿＿好。</span>', ans:['越来越'], hint:'越来越+adj = getting more and more [adj]' },
+    { type:'mc', stem:'Culture: China\'s 中国中学生的课余生活 (Chinese students\' after-school life). Which is most common?', choices:['Homework, tutoring (补习班), music/sport lessons, online study','Only sports','Only gaming','Full free time'], ans:0, hint:'Chinese students typically have 作业, 补习, and extracurricular 才艺班 (talent classes)' },
+    { type:'mc', stem:'Which uses 能 correctly?', choices:['她今天不舒服，不能来上课。','她会不能唱歌。','能她来吗？','她能会说中文。'], ans:0, hint:'能=situational ability/possibility; 不能=cannot (due to circumstances)' },
+    { type:'reading',
+      passage:'小明的中学生活很充实。他每天放学后先跑步锻炼，然后做功课，最后练习钢琴。他说汉语说得很好，写字也写得很工整。他的好朋友阿里在努力学习中文，阿里说中文说得越来越流利了。王老师对他们说："你们都进步很大！要继续努力！"两个人都笑着说："谢谢老师！我们会继续努力的！"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What does Xiao Ming do after school each day?',
+      choices:['Run, do homework, then practise piano (跑步、做功课、练钢琴)','Only do homework','Watch TV then sleep','Play basketball then study'],
+      ans:0, hint:'先跑步锻炼，然后做功课，最后练习钢琴' },
+    { type:'reading',
+      passage:'小明的中学生活很充实。他每天放学后先跑步锻炼，然后做功课，最后练习钢琴。他说汉语说得很好，写字也写得很工整。他的好朋友阿里在努力学习中文，阿里说中文说得越来越流利了。王老师对他们说："你们都进步很大！要继续努力！"两个人都笑着说："谢谢老师！我们会继续努力的！"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'How is Ali\'s Chinese improving?',
+      choices:['Getting more and more fluent (越来越流利)','Getting worse','Staying the same','Very slowly'],
+      ans:0, hint:'阿里说中文说得越来越流利了 — 越来越=getting more and more' },
+    { type:'reading',
+      passage:'小明的中学生活很充实。他每天放学后先跑步锻炼，然后做功课，最后练习钢琴。他说汉语说得很好，写字也写得很工整。他的好朋友阿里在努力学习中文，阿里说中文说得越来越流利了。王老师对他们说："你们都进步很大！要继续努力！"两个人都笑着说："谢谢老师！我们会继续努力的！"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What does Teacher Wang tell them?',
+      choices:['You have both improved a lot — keep working hard','Only Xiao Ming has improved','They need to practise more piano','Their homework is incomplete'],
+      ans:0, hint:'你们都进步很大！要继续努力！' },
+    { type:'reading',
+      passage:'小明的中学生活很充实。他每天放学后先跑步锻炼，然后做功课，最后练习钢琴。他说汉语说得很好，写字也写得很工整。他的好朋友阿里在努力学习中文，阿里说中文说得越来越流利了。王老师对他们说："你们都进步很大！要继续努力！"两个人都笑着说："谢谢老师！我们会继续努力的！"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'Which grammar pattern links the after-school activities?',
+      choices:['先……然后……最后…… (first…then…finally…)','因为……所以……','虽然……但是……','如果……就……'],
+      ans:0, hint:'先跑步，然后做功课，最后练钢琴 = 承接复句 HSK3' },
+    { type:'hots',
+      stem:'After-school life differs between Chinese and Emirati students. Chinese students often attend 补习班 (tutoring classes) and multiple extracurricular activities. <span class="cn">课余生活反映了一个社会的教育价值观。</span> Compare Chinese and Emirati students\' after-school lives. What does this tell us about each culture\'s values?',
+      prompts:['What do Chinese students typically do after school? What about Emirati students?','Is academic achievement more valued than well-being in your school culture?','Use: 先……然后……最后…… to describe your ideal after-school routine in Chinese.'],
+      hint:'Use specific examples and state complement sentences (V+得+adj) to describe activities.' },
+  ]},
+]},
+
+// LESSON 3 · 别担心，我帮你复习。关心
+{ id:'3B-L3', num:'Lesson 3', title:'别担心，我帮你复习。Showing Care', cn:'关心',
+  tiers:[
+  { qs:[
+    { type:'mc', stem:'<span class="cn">别担心！</span> means:', choices:["Don't worry!","Don't be afraid!","Be careful!","Don't run!"], ans:0, hint:'别=don\'t (negative imperative); 担心=worry; 别担心=don\'t worry' },
+    { type:'mc', stem:'Which word means "difficult"?', choices:['难','容易','闲','帮'], ans:0, hint:'难=difficult; 容易=easy (opposite)' },
+    { type:'mc', stem:'<span class="cn">容易</span> means:', choices:['easy','difficult','tired','worried'], ans:0, hint:'容易=easy; opposite of 难 (difficult)' },
+    { type:'mc', stem:'<span class="cn">帮</span> means:', choices:['to help','to worry','to review','to rest'], ans:0, hint:'帮=help; 帮助=to help; 帮你复习=help you review' },
+    { type:'mc', stem:'<span class="cn">复习</span> means:', choices:['to review / revise','to practise','to preview','to test'], ans:0, hint:'复习=review learned material; 复=again, 习=practise' },
+    { type:'mc', stem:'<span class="cn">别</span> in 别担心 is:', choices:['否定副词 (negative adverb = don\'t)','连词 (conjunction)','介词 (preposition)','量词 (measure word)'], ans:0, hint:'别=don\'t (imperative negation); HSK2 否定副词 for commands' },
+    { type:'fill', stem:'Say "don\'t be nervous": <span class="cn">别＿＿＿！</span>', ans:['紧张'], hint:'紧张=nervous/tense; 别紧张=don\'t be nervous' },
+    { type:'match', stem:'Match words to meanings', left:['担心','帮助','复习','练习'], right:['to worry','to help','to review','to practise'], pairs:[[0,0],[1,1],[2,2],[3,3]], hint:'Lesson 3 core verbs — studying and caring vocabulary' },
+    { type:'mc', stem:'Which sentence means "Don\'t worry, I\'ll help you"?', choices:['别担心，我帮你。','担心别，帮我你。','你别，我担心帮。','别我担心，你帮。'], ans:0, hint:'别+V (negative command); 我帮你=I help you (subject+verb+object)' },
+    { type:'fill', stem:'"This exam is a bit difficult." <span class="cn">这次考试有点儿＿＿＿。</span>', ans:['难'], hint:'有点儿+adj=a bit/somewhat [adj]; 难=difficult' },
+  ]},
+  { qs:[
+    { type:'mc', stem:'<span class="cn">考试有点儿难。</span> uses which grammar?', choices:['有点儿+形容词 — expresses slight degree (a bit/somewhat)','很+形容词 — strong degree','不+形容词 — negation','极了 — extreme degree'], ans:0, hint:'HSK2: 有点儿=a little/somewhat — used before adjectives (often implying mild negative tone)' },
+    { type:'mc', stem:'<span class="cn">别</span> vs <span class="cn">不要</span> for imperative negation:', choices:['Both mean "don\'t" — 别 is slightly more colloquial','别 is stronger prohibition','不要 cannot be used in imperatives','They are completely different'], ans:0, hint:'别 and 不要 both = "don\'t"; 别 is more colloquial; 不要 is slightly more formal' },
+    { type:'fill', stem:'Complete: <span class="cn">你别＿＿＿，这道题不难！</span>', ans:['担心','紧张'], hint:'别+V; 担心=worry; 紧张=nervous' },
+    { type:'mc', stem:'Culture: Chinese students show care (关心) by offering to 帮助复习 (help review). This reflects:', choices:['Collective culture — helping peers succeed is valued','Competitive culture — everyone is rival','Individualism in learning','Only teachers help students'], ans:0, hint:'中国集体主义文化: helping classmates is seen as positive — 互帮互助' },
+    { type:'mc', stem:'<span class="cn">除了夜夜守岁</span> — 除夕 refers to:', choices:['Chinese New Year\'s Eve (the night before Spring Festival)','Mid-Autumn Festival','Lantern Festival','Dragon Boat Festival'], ans:0, hint:'除夕=Chinese New Year\'s Eve; 守岁=staying up all night to welcome the new year' },
+    { type:'mc', stem:'Which correctly says "This topic is not difficult at all"?', choices:['这道题一点儿也不难。','这道题不一点儿难。','一点儿这道题不难。','这道题难一点儿不。'], ans:0, hint:'HSK3 固定格式: 一点儿也不+adj = not [adj] at all' },
+    { type:'fill', stem:'"Don\'t worry, this exam is not difficult." <span class="cn">别担心，这次考试一点儿也＿＿难。</span>', ans:['不'], hint:'一点儿也不+adj=not [adj] at all; 一点儿也不难=not difficult at all' },
+    { type:'match', stem:'Match expressions of degree', left:['有点儿难','一点儿也不难','非常难','越来越难'], right:['a bit difficult','not difficult at all','very difficult','getting more and more difficult'], pairs:[[0,0],[1,1],[2,2],[3,3]], hint:'Degree expressions from slight to extreme' },
+    { type:'reading',
+      passage:'期中考试快到了，阿里很紧张。他对小明说："这次考试的内容好多，我有点儿担心。"小明说："别担心！我帮你复习。你哪里不懂？"阿里说："汉字写起来有点儿难，我总是写错。"小明说："没关系！写错了可以改。你每天多写几个，慢慢就会好的。只要你坚持练习，考试一定不难！"阿里听了小明的话，心里好多了。',
+      passageLabel:'Reading · 阅读理解',
+      stem:'Why is Ali nervous?',
+      choices:['There is a lot of exam content and he is worried','He does not like Chinese','He forgot to study','He is sick'],
+      ans:0, hint:'这次考试的内容好多，我有点儿担心' },
+    { type:'reading',
+      passage:'期中考试快到了，阿里很紧张。他对小明说："这次考试的内容好多，我有点儿担心。"小明说："别担心！我帮你复习。你哪里不懂？"阿里说："汉字写起来有点儿难，我总是写错。"小明说："没关系！写错了可以改。你每天多写几个，慢慢就会好的。只要你坚持练习，考试一定不难！"阿里听了小明的话，心里好多了。',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What difficulty does Ali mention?',
+      choices:['Writing Chinese characters is a bit hard (汉字写起来有点儿难)','Reading is too fast','Listening is unclear','Grammar is confusing'],
+      ans:0, hint:'汉字写起来有点儿难，我总是写错' },
+  ]},
+  { qs:[
+    { type:'mc', stem:'<span class="cn">汉字写起来有点儿难</span> — what does 起来 express here?', choices:['趋向补语 引申用法: marks beginning of an action/evaluation (when it comes to writing)','Literal directional meaning (write upwards)','A time adverb','A result complement'], ans:0, hint:'HSK3 趋向补语2 引申用法: V+起来 expressing evaluation/impression upon starting' },
+    { type:'mc', stem:'Culture: 关心 (caring) in Chinese culture often involves practical help rather than just emotional support. Which of these best illustrates this?', choices:['Helping a classmate review for an exam','Saying "I\'m sorry you\'re sad"','Giving flowers','Sending a message of encouragement only'], ans:0, hint:'Chinese 关心: often expressed through concrete actions — 帮助, 送饭, 陪伴' },
+    { type:'fill', stem:'"When it comes to learning Chinese, it gets easier and easier." <span class="cn">学汉语学起来越来越＿＿＿。</span>', ans:['容易'], hint:'V+起来=when it comes to [V]-ing; 越来越容易=getting easier and easier' },
+    { type:'mc', stem:'The pattern <span class="cn">只要……就……</span> in "只要你坚持练习，考试一定不难" expresses:', choices:['条件复句: as long as [condition], then [result]','假设复句: hypothetical','转折复句: contrast','并列复句: parallel'], ans:0, hint:'只要……就…… = conditional compound sentence (HSK3)' },
+    { type:'mc', stem:'<span class="cn">没关系</span> means:', choices:["It doesn't matter / That's OK","You're welcome","Excuse me","I don't understand"], ans:0, hint:'没关系=doesn\'t matter/it\'s OK; common reassurance expression' },
+    { type:'reading',
+      passage:'阿里下周有汉语考试，他很担心，因为汉字写起来有点儿难。法蒂玛知道了，她说："别担心！我帮你复习，每天放学后我们一起练习汉字，好吗？"阿里说："太谢谢你了！"他们每天放学后一起练习半个小时。老师说，这次考试大家都考得不错，阿里考了八十分，法蒂玛考了九十分。两个人都很高兴，他们互相感谢对方的帮助。',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What score did Ali get in the exam?',
+      choices:['80 marks (八十分)','90 marks','70 marks','100 marks'],
+      ans:0, hint:'阿里考了八十分' },
+    { type:'reading',
+      passage:'阿里下周有汉语考试，他很担心，因为汉字写起来有点儿难。法蒂玛知道了，她说："别担心！我帮你复习，每天放学后我们一起练习汉字，好吗？"阿里说："太谢谢你了！"他们每天放学后一起练习半个小时。老师说，这次考试大家都考得不错，阿里考了八十分，法蒂玛考了九十分。两个人都很高兴，他们互相感谢对方的帮助。',
+      passageLabel:'Reading · 阅读理解',
+      stem:'How did Fatima help Ali prepare?',
+      choices:['Practising Chinese characters together after school every day','Giving him her notes','Doing the exam for him','Asking the teacher for help'],
+      ans:0, hint:'每天放学后一起练习汉字' },
+    { type:'reading',
+      passage:'阿里下周有汉语考试，他很担心，因为汉字写起来有点儿难。法蒂玛知道了，她说："别担心！我帮你复习，每天放学后我们一起练习汉字，好吗？"阿里说："太谢谢你了！"他们每天放学后一起练习半个小时。老师说，这次考试大家都考得不错，阿里考了八十分，法蒂玛考了九十分。两个人都很高兴，他们互相感谢对方的帮助。',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What did they do at the end?',
+      choices:['They thanked each other for the help (互相感谢)','Ali thanked only Fatima','Fatima said Ali did not need help','They argued about the scores'],
+      ans:0, hint:'他们互相感谢对方的帮助 — 互相=each other' },
+    { type:'reading',
+      passage:'阿里下周有汉语考试，他很担心，因为汉字写起来有点儿难。法蒂玛知道了，她说："别担心！我帮你复习，每天放学后我们一起练习汉字，好吗？"阿里说："太谢谢你了！"他们每天放学后一起练习半个小时。老师说，这次考试大家都考得不错，阿里考了八十分，法蒂玛考了九十分。两个人都很高兴，他们互相感谢对方的帮助。',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What grammar structure does 别担心 use?',
+      choices:['用"别"的祈使句 (imperative with 别 = don\'t)','比较句','被动句','疑问句'],
+      ans:0, hint:'别+V = negative imperative sentence (HSK2 句类: 用"别"的祈使句)' },
+    { type:'hots',
+      stem:'In Chinese culture, 关心 (showing care) often takes the form of practical help — helping someone review for an exam, cooking for a sick friend, or offering study guidance. <span class="cn">关心可以用很多方式表达。</span> How do you show care for friends in your culture? Compare Chinese and Emirati ways of showing concern. Is practical help or emotional support more important?',
+      prompts:['When a friend is stressed about exams in your culture, what do you do?','Chinese culture: 帮助 (practical help) is common. Emirati culture: what forms does 关心 take?','Use: 别担心, 我帮你……, 你有点儿……吗？ in your response.'],
+      hint:'Strong answers give specific examples from both cultures and connect to values.' },
+  ]},
+]},
+
+// LESSON 4 · 我们一起去哈利法塔吧。建议
+{ id:'3B-L4', num:'Lesson 4', title:'我们一起去哈利法塔吧。Making Suggestions', cn:'建议',
+  tiers:[
+  { qs:[
+    { type:'mc', stem:'<span class="cn">我们一起去哈利法塔吧。</span> means:', choices:["Let's go to Burj Khalifa together!","Have you been to Burj Khalifa?","Burj Khalifa is very tall.","How do we get to Burj Khalifa?"], ans:0, hint:'我们=we; 一起=together; 吧=suggestion particle; 去哈利法塔=go to Burj Khalifa' },
+    { type:'mc', stem:'<span class="cn">米</span> as a measurement unit means:', choices:['metres (unit of length)','rice','honey','money'], ans:0, hint:'米=metres (unit); also 米=rice — context determines meaning. 828米=828 metres' },
+    { type:'mc', stem:'Which word means "the most / -est (superlative)"?', choices:['最','很','更','比'], ans:0, hint:'最=most/superlative; 最高=tallest; 最漂亮=most beautiful' },
+    { type:'mc', stem:'<span class="cn">楼</span> means:', choices:['building / floor','sky','ground','mountain'], ans:0, hint:'楼=building/floor; 高楼=tall building; 哈利法楼=Burj Khalifa' },
+    { type:'mc', stem:'<span class="cn">虽然</span> introduces:', choices:['a concession clause (although/even though)','a reason (because)','a result (so)','a condition (if)'], ans:0, hint:'虽然=although/even though; 虽然……但是……=concessive compound sentence' },
+    { type:'mc', stem:'<span class="cn">但是</span> means:', choices:['but / however','and','or','so'], ans:0, hint:'但是=but/however; 虽然A，但是B=although A, but B' },
+    { type:'fill', stem:'"Let\'s go together!": <span class="cn">我们一起去＿＿！</span>', ans:['吧'], hint:'吧 at end of sentence = suggestion/invitation; 一起去吧=let\'s go together' },
+    { type:'match', stem:'Match words to meanings', left:['最高','虽然','但是','从'], right:['tallest','although','but','from'], pairs:[[0,0],[1,1],[2,2],[3,3]], hint:'Lesson 4 key vocabulary' },
+    { type:'mc', stem:'<span class="cn">吧</span> at the end of a suggestion sentence functions as:', choices:['语气助词 (modal particle expressing suggestion or invitation)','结构助词 (structural particle)','动态助词 (aspect particle)','疑问助词 (question particle)'], ans:0, hint:'吧=suggestion particle — 我们走吧=let\'s go; 你去吧=go ahead' },
+    { type:'fill', stem:'"Although I haven\'t been there, I know it is the world\'s tallest building." <span class="cn">虽然我没去过，＿＿是知道它是全世界最高的楼。</span>', ans:['但'], hint:'虽然……但是/但……=although…but…; 转折复句 HSK2/3' },
+  ]},
+  { qs:[
+    { type:'mc', stem:'<span class="cn">虽然我没去过，但是知道它是全世界最高的楼。</span> — which grammar structure is this?', choices:['转折复句: 虽然……但是…… (concessive compound)','因果复句: 因为……所以……','假设复句: 如果……就……','递进复句: 不但……而且……'], ans:0, hint:'虽然……但是…… = HSK2 转折复句 (concessive compound sentence)' },
+    { type:'mc', stem:'<span class="cn">全世界最高的楼</span> — 最 here creates a(n):', choices:['程度副词 superlative (程度副词 — 最+adj = most adj)','比较句 (comparison with 比)','可能补语','存现句'], ans:0, hint:'最+形容词 = superlative degree adverb (HSK2 程度副词: 最)' },
+    { type:'fill', stem:'"Burj Khalifa is the tallest building in the world." <span class="cn">哈利法塔是全世界＿＿＿高的楼。</span>', ans:['最'], hint:'最+adj = superlative; 最高=tallest' },
+    { type:'mc', stem:'<span class="cn">参观</span> in this lesson means:', choices:['to visit / to tour (a place/attraction)','to watch TV','to study','to travel by car'], ans:0, hint:'参观=to visit an attraction or institution; 参观博物馆=visit a museum' },
+    { type:'mc', stem:'Culture: 哈利法塔 (Burj Khalifa) was completed in 2010 and stands at 828 metres. What does it represent?', choices:['UAE\'s ambition, modernisation, and status as a global landmark','A traditional Emirati building','A mosque','A natural formation'], ans:0, hint:'布吉哈利法楼=symbol of Dubai\'s modern identity and economic achievement' },
+    { type:'mc', stem:'<span class="cn">我虽然没去过，但是知道……</span> — 我 is the subject of both clauses. What connects them?', choices:['虽然……但是…… (concessive conjunction pair)','因为……所以……','一……就……','只有……才……'], ans:0, hint:'虽然……但是…… connects two clauses with a concessive relationship' },
+    { type:'fill', stem:'"Although this building is very high, it is not the most beautiful." <span class="cn">虽然这楼很高，但是不是＿＿漂亮的。</span>', ans:['最'], hint:'最+adj=superlative; 最漂亮=most beautiful' },
+    { type:'match', stem:'Match sentence structures to types', left:['虽然……但是……','如果……就……','不但……而且……','只要……就……'], right:['concessive (although…but…)','hypothetical (if…then…)','additive (not only…but also…)','conditional (as long as…then…)'], pairs:[[0,0],[1,1],[2,2],[3,3]], hint:'HSK2/3 complex sentence patterns — all appear in 3B lessons' },
+    { type:'reading',
+      passage:'今天是周末，小明提议大家去参观哈利法塔。他说："我们一起去哈利法塔吧！它是全世界最高的建筑，一共有163层，高828米。"阿里说："好主意！我虽然住在迪拜，但是还没去过哈利法塔观景台！"法蒂玛说："我去过一次，真的很漂亮，特别是晚上，灯光很好看！"小明说："那我们走吧！我很期待！"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'How many floors does Burj Khalifa have?',
+      choices:['163 floors (163层)','100 floors','200 floors','828 floors'],
+      ans:0, hint:'一共有163层，高828米' },
+    { type:'reading',
+      passage:'今天是周末，小明提议大家去参观哈利法塔。他说："我们一起去哈利法塔吧！它是全世界最高的建筑，一共有163层，高828米。"阿里说："好主意！我虽然住在迪拜，但是还没去过哈利法塔观景台！"法蒂玛说："我去过一次，真的很漂亮，特别是晚上，灯光很好看！"小明说："那我们走吧！我很期待！"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'Why is it surprising that Ali hasn\'t been to Burj Khalifa?',
+      choices:['He lives in Dubai (虽然住在迪拜，但是还没去过)','He doesn\'t like buildings','He is afraid of heights','It costs too much'],
+      ans:0, hint:'虽然……但是…… — concessive: he lives in Dubai yet hasn\'t visited' },
+  ]},
+  { qs:[
+    { type:'mc', stem:'Grammar: <span class="cn">吧</span> at the end of a statement vs. a question. Which is correct?', choices:['Statement+吧=suggestion; Question+吧=seeking confirmation','Both always express questions','吧 only for suggestions','吧 only in questions'], ans:0, hint:'我们走吧=let\'s go (suggestion); 他来了吧？=He came, didn\'t he? (confirmation-seeking)' },
+    { type:'mc', stem:'Culture: 地标建筑 (landmark buildings) often become symbols of national pride. The Burj Khalifa for UAE is similar to which Chinese landmark?', choices:['上海中心大厦 (Shanghai Tower) or 国家体育场 (Bird\'s Nest)','The Great Wall','Tiananmen Gate','The Yellow River'], ans:0, hint:'Both 上海中心大厦 and 哈利法塔 are modern architectural achievements representing national ambition' },
+    { type:'fill', stem:'"Not only is it the tallest, but it is also the most beautiful." <span class="cn">不但是最高的，＿＿＿是最漂亮的。</span>', ans:['而且'], hint:'不但……而且……=not only…but also… (递进复句 HSK3)' },
+    { type:'mc', stem:'The full sentence pattern 虽然A，但是B requires:', choices:['A is a conceded point; B is the main point the speaker wants to make','A is the main point; B is secondary','Both A and B are equally important','虽然 and 但是 never appear in the same sentence'], ans:0, hint:'虽然A=concession; 但是B=the speaker\'s real point — B carries the emphasis' },
+    { type:'mc', stem:'Which sentence uses 最 INCORRECTLY?', choices:['他是最最高的。','他是全班最高的。','这是最好的方法。','她唱得最好听。'], ans:0, hint:'最最 (double 最) is not standard Chinese — 最 is not repeated' },
+    { type:'reading',
+      passage:'小明第一次来迪拜，阿里带他去参观哈利法塔。阿里说："哈利法塔是全世界最高的楼，高828米，有163层。你知道吗，在晚上它有五颜六色的灯，特别漂亮。"小明说："虽然我在书上看过哈利法塔，但是没想到它这么高！"他们买票进去，坐高速电梯到了124层的观景台。小明往下看，说："太壮观了！迪拜真的很美！"阿里说："我很高兴你喜欢！"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What does Xiao Ming say when he sees Burj Khalifa in person?',
+      choices:['He didn\'t expect it to be so tall (没想到它这么高)','It is smaller than he thought','It looks the same as in books','He doesn\'t like it'],
+      ans:0, hint:'虽然在书上看过，但是没想到它这么高' },
+    { type:'reading',
+      passage:'小明第一次来迪拜，阿里带他去参观哈利法塔。阿里说："哈利法塔是全世界最高的楼，高828米，有163层。你知道吗，在晚上它有五颜六色的灯，特别漂亮。"小明说："虽然我在书上看过哈利法塔，但是没想到它这么高！"他们买票进去，坐高速电梯到了124层的观景台。小明往下看，说："太壮观了！迪拜真的很美！"阿里说："我很高兴你喜欢！"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'Which floor is the observation deck (观景台) on?',
+      choices:['124th floor (124层)','163rd floor','828th floor','100th floor'],
+      ans:0, hint:'坐高速电梯到了124层的观景台' },
+    { type:'reading',
+      passage:'小明第一次来迪拜，阿里带他去参观哈利法塔。阿里说："哈利法塔是全世界最高的楼，高828米，有163层。你知道吗，在晚上它有五颜六色的灯，特别漂亮。"小明说："虽然我在书上看过哈利法塔，但是没想到它这么高！"他们买票进去，坐高速电梯到了124层的观景台。小明往下看，说："太壮观了！迪拜真的很美！"阿里说："我很高兴你喜欢！"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What does Xiao Ming say about Dubai?',
+      choices:['It is truly beautiful (迪拜真的很美)','It is smaller than Shanghai','The building is not impressive','He wants to leave'],
+      ans:0, hint:'太壮观了！迪拜真的很美！' },
+    { type:'reading',
+      passage:'小明第一次来迪拜，阿里带他去参观哈利法塔。阿里说："哈利法塔是全世界最高的楼，高828米，有163层。你知道吗，在晚上它有五颜六色的灯，特别漂亮。"小明说："虽然我在书上看过哈利法塔，但是没想到它这么高！"他们买票进去，坐高速电梯到了124层的观景台。小明往下看，说："太壮观了！迪拜真的很美！"阿里说："我很高兴你喜欢！"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What special feature does Burj Khalifa have at night?',
+      choices:['Colourful lights (五颜六色的灯)','A laser show','A rooftop garden','A swimming pool'],
+      ans:0, hint:'在晚上它有五颜六色的灯，特别漂亮 — 五颜六色=colourful' },
+    { type:'hots',
+      stem:'Landmark buildings like 哈利法塔 (Burj Khalifa) and 上海中心大厦 (Shanghai Tower) represent each country\'s ambitions. <span class="cn">地标建筑是一个国家的名片。</span> Do you think giant skyscrapers reflect positive national values or show-off culture? Compare Burj Khalifa with a famous Chinese landmark. What do they say about their respective cultures?',
+      prompts:['What does the Burj Khalifa say about Dubai/UAE\'s ambitions and identity?','What Chinese landmark would you compare it to? Why? (Consider: 长城, 故宫, 上海中心大厦)','Use: 虽然……但是……, 不但……而且……, 最…… in your comparison.'],
+      hint:'Strong answers use both cultural and structural comparisons with specific examples.' },
+  ]},
+]},
+
+// LESSON 5 · 哈利法塔晚上最漂亮。事情先后顺序
+{ id:'3B-L5', num:'Lesson 5', title:'哈利法塔晚上最漂亮。Sequence of Events', cn:'事情先后顺序',
+  tiers:[
+  { qs:[
+    { type:'mc', stem:'<span class="cn">因为……所以……</span> expresses:', choices:['cause and effect (because… therefore…)','contrast (although… but…)','sequence (first… then…)','condition (if… then…)'], ans:0, hint:'因为=because; 所以=so/therefore; 因果复句 (cause-effect compound sentence)' },
+    { type:'mc', stem:'<span class="cn">先</span> in 先学习，再运动 means:', choices:['first (sequencing)','then','because','also'], ans:0, hint:'先=first; 再=then (after); 先……再……=first…then… sequence' },
+    { type:'mc', stem:'<span class="cn">再</span> in 先学习，再运动 means:', choices:['then (after first action) / again','first','also','still'], ans:0, hint:'再=then/after that (in sequence); 先A再B=do A first, then B' },
+    { type:'mc', stem:'<span class="cn">灯</span> means:', choices:['light / lamp','moon','star','building'], ans:0, hint:'灯=light/lamp; 灯光=lighting; 五颜六色的灯=colourful lights' },
+    { type:'mc', stem:'<span class="cn">五颜六色</span> means:', choices:['colourful / many colours','very bright','very dark','only two colours'], ans:0, hint:'五颜六色: 五=five, 颜=colour, 六=six, 色=colour — many colours = colourful' },
+    { type:'mc', stem:'Which sentence uses 所以 correctly?', choices:['因为今天下雨，所以我没出去。','我所以没出去，因为今天下雨。','所以我没出去，今天下雨因为。','我没出去因为所以今天下雨。'], ans:0, hint:'因为+reason clause，所以+result clause — fixed order' },
+    { type:'fill', stem:'Complete: <span class="cn">因为运动对身体好，＿＿我每天都跑步。</span>', ans:['所以'], hint:'所以=therefore/so — follows 因为 clause' },
+    { type:'match', stem:'Match sequencing words to meanings', left:['先','再','然后','最后'], right:['first','then (next)','after that','finally/last'], pairs:[[0,0],[1,1],[2,2],[3,3]], hint:'Sequence words: 先>再/然后>最后 — order of events' },
+    { type:'mc', stem:'<span class="cn">我先学习，再运动。因为晚上有五颜六色的灯，所以特别漂亮。</span> — how many compound sentence patterns are used?', choices:['Two: 承接复句 (先再) and 因果复句 (因为所以)','One','Three','None'], ans:0, hint:'先……再……=sequential; 因为……所以……=causal — two different patterns' },
+    { type:'fill', stem:'"Because Burj Khalifa has colourful lights at night, it is especially beautiful." <span class="cn">因为哈利法塔晚上有五颜六色的灯，＿＿特别漂亮。</span>', ans:['所以'], hint:'因为A，所以B = because A, so/therefore B' },
+  ]},
+  { qs:[
+    { type:'mc', stem:'<span class="cn">先……再……</span> vs <span class="cn">先……然后……</span>: What is the difference?', choices:['再=immediate next action; 然后=after that (slightly more gap/pause)','Completely identical','再 is informal; 然后 is formal','先再 is wrong grammar'], ans:0, hint:'Both express sequence; 然后 often implies a slightly longer gap or different location' },
+    { type:'mc', stem:'Grammar: 因果复句 "因为A，所以B". Which clause position is fixed?', choices:['因为 introduces cause (can be first or second); 所以 introduces result (follows 因为)','因为 always ends the sentence','所以 always starts the sentence','Neither can move'], ans:0, hint:'因为 clause usually comes first; 所以 follows — though 因为 clause can be second with context' },
+    { type:'fill', stem:'"I first study, then exercise, and finally sleep." <span class="cn">我先学习，再运动，＿＿睡觉。</span>', ans:['最后'], hint:'先……再……最后……= first, then, finally — full sequence pattern' },
+    { type:'mc', stem:'Culture: 中国高铁 (China\'s high-speed rail) — why is it relevant to this lesson\'s theme of 事情先后顺序?', choices:['High-speed rail enables precise scheduling — sequence and timing are essential','Trains are beautiful like Burj Khalifa at night','China has no airports','Railways are only for goods'], ans:0, hint:'高铁时刻表 requires exact sequence and timing — 先到站，再出发 etc.' },
+    { type:'mc', stem:'<span class="cn">特别</span> in 特别漂亮 is a(n):', choices:['程度副词 (degree adverb — especially/particularly)','形容词 (adjective)','动词 (verb)','连词 (conjunction)'], ans:0, hint:'特别=especially/particularly — 程度副词; stronger than 很' },
+    { type:'mc', stem:'Which correctly expresses "because… so…" for a reason-result relationship?', choices:['因为天气很热，所以她喝了很多水。','她喝了很多水因为所以天气很热。','所以天气很热，因为她喝水了。','因为所以天气热她喝水。'], ans:0, hint:'因为+reason，所以+result — clause order matters' },
+    { type:'fill', stem:'"Because tonight has colourful lights, Burj Khalifa is especially beautiful." <span class="cn">因为今晚有五颜六色的灯，所以哈利法塔＿＿漂亮。</span>', ans:['特别'], hint:'特别+adj=especially [adj]; 特别漂亮=especially beautiful' },
+    { type:'match', stem:'Match Chinese compound sentences to types', left:['因为……所以……','虽然……但是……','如果……就……','先……再……'], right:['cause-effect','concession','hypothesis','sequence'], pairs:[[0,0],[1,1],[2,2],[3,3]], hint:'Key compound sentence patterns HSK2/3' },
+    { type:'reading',
+      passage:'阿里喜欢跑步。他说："我每天先学习两个小时，再出去跑步，因为运动对身体很好，所以我坚持每天锻炼。我跑步跑得越来越快了！"小明问："你每天几点跑？"阿里说："我通常晚上六点跑，因为晚上凉快，而且哈利法塔的灯光特别漂亮，跑步的时候可以欣赏。"小明说："真好！你先学习再运动，很自律！"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What does Ali do before running?',
+      choices:['Study for two hours (先学习两个小时)','Eat dinner','Sleep','Watch TV'],
+      ans:0, hint:'我每天先学习两个小时，再出去跑步' },
+    { type:'reading',
+      passage:'阿里喜欢跑步。他说："我每天先学习两个小时，再出去跑步，因为运动对身体很好，所以我坚持每天锻炼。我跑步跑得越来越快了！"小明问："你每天几点跑？"阿里说："我通常晚上六点跑，因为晚上凉快，而且哈利法塔的灯光特别漂亮，跑步的时候可以欣赏。"小明说："真好！你先学习再运动，很自律！"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'Why does Ali prefer running in the evening?',
+      choices:['It is cooler and he can enjoy Burj Khalifa\'s lights (凉快，灯光漂亮)','The morning is too busy','He has no time in the morning','He dislikes morning exercise'],
+      ans:0, hint:'因为晚上凉快，而且哈利法塔的灯光特别漂亮' },
+  ]},
+  { qs:[
+    { type:'mc', stem:'Advanced analysis: <span class="cn">因为晚上有五颜六色的灯，所以特别漂亮</span> — what is 特别漂亮\'s subject?', choices:['Burj Khalifa (implied from context — 哈利法塔)','The lights (灯)','The night (晚上)','Dubai (迪拜)'], ans:0, hint:'The implied subject is 哈利法塔 — Chinese often omits the subject when it is clear from context' },
+    { type:'mc', stem:'HSK3: 承接复句 (先……再……) vs 并列复句 (一边……一边……). Key difference?', choices:['承接: sequential (A then B); 并列: simultaneous (A and B at the same time)','Both express sequence','并列 is about time order','承接 means doing two things at once'], ans:0, hint:'先……再……=sequential actions (one then another); 一边……一边……=simultaneous actions' },
+    { type:'fill', stem:'"He first studies, then runs, while listening to music." <span class="cn">他先学习，再跑步，＿＿＿＿听音乐。</span>', ans:['一边'], hint:'一边+V1，一边+V2=doing two things simultaneously; here running while listening' },
+    { type:'mc', stem:'Culture: 中国高铁 can reach speeds of 350 km/h. The sequence involved is:', choices:['Check schedule → buy ticket → board → travel → arrive — strict sequencing required','Random order — no planning needed','Only one step required','No tickets needed'], ans:0, hint:'高铁 requires careful 先……再……最后…… planning — sequence is critical for safe travel' },
+    { type:'mc', stem:'Which correctly uses 因为……所以…… with two subjects?', choices:['因为他很努力，所以他进步很快。','因为他很努力所以，他进步很快。','他所以进步很快，因为他努力。','因为所以他努力，他进步快。'], ans:0, hint:'因为S1+VP1，所以S2+VP2 — punctuation after 因为 clause is needed' },
+    { type:'reading',
+      passage:'今晚，阿里和法蒂玛去哈利法塔附近散步。阿里说："我先学习，再运动，因为这样对身体好，所以我每天都坚持。"法蒂玛说："我也是！我先做完功课，再出来散步。因为今晚有五颜六色的灯，所以哈利法塔特别漂亮！"阿里说："对！我喜欢先学习再放松，这样效率最高。"法蒂玛说："中国有句话叫『一日之计在于晨』，意思是早上最重要。你觉得呢？"阿里说："我更喜欢先学后玩，时间安排得好才最重要！"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What does Fatima do before going for a walk?',
+      choices:['Finish her homework first (先做完功课)','Run first','Eat dinner first','Watch TV first'],
+      ans:0, hint:'我先做完功课，再出来散步' },
+    { type:'reading',
+      passage:'今晚，阿里和法蒂玛去哈利法塔附近散步。阿里说："我先学习，再运动，因为这样对身体好，所以我每天都坚持。"法蒂玛说："我也是！我先做完功课，再出来散步。因为今晚有五颜六色的灯，所以哈利法塔特别漂亮！"阿里说："对！我喜欢先学习再放松，这样效率最高。"法蒂玛说："中国有句话叫『一日之计在于晨』，意思是早上最重要。你觉得呢？"阿里说："我更喜欢先学后玩，时间安排得好才最重要！"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What Chinese saying does Fatima mention?',
+      choices:['「一日之计在于晨」 (the morning is most important)','先苦后甜','一步一个脚印','功夫不负有心人'],
+      ans:0, hint:'中国有句话叫"一日之计在于晨"，意思是早上最重要' },
+    { type:'reading',
+      passage:'今晚，阿里和法蒂玛去哈利法塔附近散步。阿里说："我先学习，再运动，因为这样对身体好，所以我每天都坚持。"法蒂玛说："我也是！我先做完功课，再出来散步。因为今晚有五颜六色的灯，所以哈利法塔特别漂亮！"阿里说："对！我喜欢先学习再放松，这样效率最高。"法蒂玛说："中国有句话叫『一日之计在于晨』，意思是早上最重要。你觉得呢？"阿里说："我更喜欢先学后玩，时间安排得好才最重要！"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What does Ali say is most important for efficiency?',
+      choices:['Good time management (时间安排得好才最重要)','Going to bed early','Studying all night','Not playing at all'],
+      ans:0, hint:'我更喜欢先学后玩，时间安排得好才最重要' },
+    { type:'reading',
+      passage:'今晚，阿里和法蒂玛去哈利法塔附近散步。阿里说："我先学习，再运动，因为这样对身体好，所以我每天都坚持。"法蒂玛说："我也是！我先做完功课，再出来散步。因为今晚有五颜六色的灯，所以哈利法塔特别漂亮！"阿里说："对！我喜欢先学习再放松，这样效率最高。"法蒂玛说："中国有句话叫『一日之计在于晨』，意思是早上最重要。你觉得呢？"阿里说："我更喜欢先学后玩，时间安排得好才最重要！"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'Why is Burj Khalifa especially beautiful tonight?',
+      choices:['Because of the colourful lights (因为有五颜六色的灯)','Because it is new','Because the weather is good','Because it is daytime'],
+      ans:0, hint:'因为今晚有五颜六色的灯，所以哈利法塔特别漂亮' },
+    { type:'hots',
+      stem:'How we organise our time says a lot about our values. Chinese culture often values studying first and playing later. <span class="cn">先苦后甜是一种生活智慧吗？</span> In your own culture, how do people balance work and rest? Is "study first, play later" always the best approach? Discuss using sequence language and cause-effect structures.',
+      prompts:['Use: 先……再……, 因为……所以…… to describe your ideal daily routine.','Compare: do UAE students and Chinese students prioritise their time similarly?','「一日之计在于晨」 — do you agree? Or is evening study better?'],
+      hint:'Strong answers use specific examples and at least two different compound sentence patterns.' },
+  ]},
+]},
+
+// LESSON 6 · 春节要到了。节日
+{ id:'3B-L6', num:'Lesson 6', title:'春节要到了。Festivals', cn:'节日',
+  tiers:[
+  { qs:[
+    { type:'mc', stem:'<span class="cn">春节要到了。</span> means:', choices:['Spring Festival is coming.','Spring Festival is over.','Do you like Spring Festival?','Spring Festival is the most important.'], ans:0, hint:'春节=Spring Festival; 要……了=is about to/going to happen soon; 到=arrive/come' },
+    { type:'mc', stem:'<span class="cn">热闹</span> means:', choices:['lively / bustling','quiet','cold','lonely'], ans:0, hint:'热闹=lively, bustling, full of festive energy — opposite of 安静 (quiet)' },
+    { type:'mc', stem:'<span class="cn">贴春联</span> means:', choices:['to paste Spring Festival couplets (on doors)','to buy Spring Festival food','to watch fireworks','to eat dumplings'], ans:0, hint:'贴=paste/stick; 春联=Spring couplets (红对联) — pasted on doors for good luck' },
+    { type:'mc', stem:'<span class="cn">发红包</span> means:', choices:['to give red envelopes (lucky money)','to post letters','to hang red lanterns','to set off fireworks'], ans:0, hint:'发=give/send; 红包=red envelope (with lucky money inside); 发红包=give red packets' },
+    { type:'mc', stem:'<span class="cn">放鞭炮</span> means:', choices:['to set off firecrackers','to hang lanterns','to eat dumplings','to clean the house'], ans:0, hint:'放=release/set off; 鞭炮=firecrackers; 放鞭炮=set off firecrackers' },
+    { type:'mc', stem:'<span class="cn">灯笼</span> means:', choices:['lantern','light bulb','candle','flashlight'], ans:0, hint:'灯笼=lantern — traditional Chinese red lanterns hung during festivals' },
+    { type:'fill', stem:'"Spring Festival is about to arrive!": <span class="cn">春节＿＿＿到了！</span>', ans:['要'], hint:'要……了=is about to…; 固定格式 HSK2: 要/快要/就要……了' },
+    { type:'match', stem:'Match Spring Festival activities to meanings', left:['贴春联','发红包','放鞭炮','挂灯笼'], right:['paste couplets','give red envelopes','set off firecrackers','hang lanterns'], pairs:[[0,0],[1,1],[2,2],[3,3]], hint:'Traditional Spring Festival customs 习俗' },
+    { type:'mc', stem:'<span class="cn">春节要到了。</span> uses which fixed grammar pattern?', choices:['要/快要/就要……了 (something is about to happen)','因为……所以……','虽然……但是……','先……再……'], ans:0, hint:'HSK2 固定格式: 要/快要/就要……了 = about to / is going to happen soon' },
+    { type:'fill', stem:'"We are going to eat dumplings soon!": <span class="cn">我们快要＿＿＿了！</span>', ans:['吃饺子'], hint:'快要……了=is about to…; 吃饺子=eat dumplings' },
+  ]},
+  { qs:[
+    { type:'mc', stem:'<span class="cn">春节要到了。</span> — what does 要……了 express grammatically?', choices:['固定格式: imminent future (about to happen)','完成态: already completed','进行态: in progress','假设: hypothetical'], ans:0, hint:'HSK2 固定格式: 要/快要/就要……了 = about to / is going to happen' },
+    { type:'mc', stem:'<span class="cn">贴"福"字</span> — why is 福 sometimes hung upside down (倒贴)?', choices:['Because 福倒=福到 (upside down 福 = luck has arrived — a pun)','It is a mistake','For decoration only','Chinese tradition has no puns'], ans:0, hint:'倒(upside down) sounds like 到(arrive): 福倒=福到 — luck has arrived! (谐音文化)' },
+    { type:'fill', stem:'"The Spring Festival is getting more and more lively!": <span class="cn">春节的气氛越来越＿＿＿了！</span>', ans:['热闹'], hint:'越来越+adj: getting more and more [adj]; 热闹=lively/festive' },
+    { type:'mc', stem:'Culture: 中国传统节日 include 春节, 中秋节, 端午节. Which describes 中秋节?', choices:['Mid-Autumn Festival — families reunite, eat mooncakes, admire the full moon','Spring Festival — set off firecrackers','Dragon Boat Festival — race dragon boats','Lantern Festival — end of Spring Festival period'], ans:0, hint:'中秋节(15th day of 8th lunar month): 赏月, 吃月饼, 家人团聚' },
+    { type:'mc', stem:'<span class="cn">春联</span> (Spring Festival couplets) typically display:', choices:['Wishes for happiness, prosperity, and health (福、财、平安)','Complaints about the old year','Shopping lists','Weather forecasts'], ans:0, hint:'春联 content: 新年快乐, 万事如意, 身体健康, 恭喜发财 etc. — positive wishes' },
+    { type:'mc', stem:'Which correctly uses 要……了?', choices:['考试快要开始了。','考试快了要开始。','要开始考试快了。','快要了考试开始。'], ans:0, hint:'Structure: (时间/Subject) + 快要/要 + VP + 了' },
+    { type:'fill', stem:'"The New Year is about to arrive — everyone is very happy!": <span class="cn">新年就要到了，大家都＿＿＿高兴！</span>', ans:['很','非常','特别'], hint:'很/非常/特别+高兴=very happy; degree adverbs' },
+    { type:'match', stem:'Match Chinese festivals to descriptions', left:['春节','中秋节','端午节','元宵节'], right:['Lunar New Year — firecrackers & dumplings','Mid-Autumn — mooncakes & moon viewing','Dragon Boat — zongzi & boat races','Lantern Festival — lanterns & riddles'], pairs:[[0,0],[1,1],[2,2],[3,3]], hint:'Four major Chinese traditional festivals 中国传统节日' },
+    { type:'reading',
+      passage:'春节快到了，小明家里很热闹。他们贴了春联，挂了灯笼，还准备了很多好吃的东西。奶奶正在包饺子，妈妈在准备年夜饭。小明的阿联酋朋友阿里来做客，他问："春节和我们的开斋节有什么不同？"小明说："春节是中国最重要的节日，我们贴春联，发红包，放鞭炮，还守岁——就是全家人一起等到新年来临！"阿里说："真有意思！和开斋节一样，春节也是家人团聚的节日！"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What is the grandmother doing?',
+      choices:['Making dumplings (包饺子)','Hanging lanterns','Setting off firecrackers','Giving red envelopes'],
+      ans:0, hint:'奶奶正在包饺子' },
+    { type:'reading',
+      passage:'春节快到了，小明家里很热闹。他们贴了春联，挂了灯笼，还准备了很多好吃的东西。奶奶正在包饺子，妈妈在准备年夜饭。小明的阿联酋朋友阿里来做客，他问："春节和我们的开斋节有什么不同？"小明说："春节是中国最重要的节日，我们贴春联，发红包，放鞭炮，还守岁——就是全家人一起等到新年来临！"阿里说："真有意思！和开斋节一样，春节也是家人团聚的节日！"',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What does 守岁 mean according to Xiao Ming?',
+      choices:['The whole family staying up together to welcome the New Year','Pasting Spring couplets','Setting off firecrackers','Eating dumplings'],
+      ans:0, hint:'守岁——就是全家人一起等到新年来临' },
+  ]},
+  { qs:[
+    { type:'mc', stem:'Cultural linguistics: <span class="cn">福倒=福到</span> is an example of:', choices:['谐音 (homophone pun) — a key feature of Chinese cultural expression','直译 (direct translation)','反义词 (antonym)','量词 (measure word)'], ans:0, hint:'谐音=homophone; 倒(dào)=upside down; 到(dào)=arrive — same sound, cultural meaning' },
+    { type:'mc', stem:'Compare 春节 and UAE\'s 开斋节 (Eid Al-Fitr). What is a key similarity?', choices:['Both centre on family reunion, special foods, and celebration','Both use firecrackers','Both last exactly 3 days','Both involve mooncakes'], ans:0, hint:'家人团聚, 特别食物, 互送礼物 — shared features across cultures' },
+    { type:'fill', stem:'"Not only do we paste Spring couplets, but we also give red envelopes." <span class="cn">我们不但贴春联，＿＿＿发红包。</span>', ans:['而且'], hint:'不但……而且……=not only…but also… (递进复句 HSK3)' },
+    { type:'mc', stem:'In the sentence <span class="cn">春节快到了</span>, the grammar structure 要/快要……了 cannot be negated as *快不到了. Why?', choices:['Because 要……了 expresses imminent certainty — it is a fixed format not negated','Because 不 never appears in Chinese','Because 快 makes negation impossible','It can be negated this way'], ans:0, hint:'要……了 is a fixed imminent future pattern; negation requires restructuring (e.g., 还没到)' },
+    { type:'mc', stem:'<span class="cn">年夜饭</span> refers to:', choices:['Chinese New Year\'s Eve reunion dinner','Breakfast on New Year\'s Day','Spring Festival street food','Dumpling-making festival'], ans:0, hint:'年夜饭=除夕 (New Year\'s Eve) reunion dinner — the most important meal of the Chinese year' },
+    { type:'reading',
+      passage:'法蒂玛第一次参加中国朋友的春节庆祝活动。小明的妈妈给法蒂玛介绍了春节的习俗：贴春联、贴"福"字、挂灯笼、放鞭炮、发红包、包饺子、吃年夜饭，还有守岁。法蒂玛说："我们阿联酋过开斋节，也是家人团聚，互送礼物，还有丰盛的食物。"小明说："看来，不同的节日有很多共同点！"法蒂玛得到了一个红包，她说："我很喜欢红包！祝大家新年快乐，恭喜发财！"大家都笑了。',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What customs does Xiao Ming\'s mother mention?',
+      choices:['Couplets, lucky characters, lanterns, firecrackers, red envelopes, dumplings, reunion dinner, staying up','Only eating dumplings','Only fireworks and red envelopes','Only cleaning the house'],
+      ans:0, hint:'贴春联、贴"福"字、挂灯笼、放鞭炮、发红包、包饺子、吃年夜饭、守岁' },
+    { type:'reading',
+      passage:'法蒂玛第一次参加中国朋友的春节庆祝活动。小明的妈妈给法蒂玛介绍了春节的习俗：贴春联、贴"福"字、挂灯笼、放鞭炮、发红包、包饺子、吃年夜饭，还有守岁。法蒂玛说："我们阿联酋过开斋节，也是家人团聚，互送礼物，还有丰盛的食物。"小明说："看来，不同的节日有很多共同点！"法蒂玛得到了一个红包，她说："我很喜欢红包！祝大家新年快乐，恭喜发财！"大家都笑了。',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What did Fatima receive?',
+      choices:['A red envelope (红包)','A Spring couplet','A lantern','Dumplings'],
+      ans:0, hint:'法蒂玛得到了一个红包' },
+    { type:'reading',
+      passage:'法蒂玛第一次参加中国朋友的春节庆祝活动。小明的妈妈给法蒂玛介绍了春节的习俗：贴春联、贴"福"字、挂灯笼、放鞭炮、发红包、包饺子、吃年夜饭，还有守岁。法蒂玛说："我们阿联酋过开斋节，也是家人团聚，互送礼物，还有丰盛的食物。"小明说："看来，不同的节日有很多共同点！"法蒂玛得到了一个红包，她说："我很喜欢红包！祝大家新年快乐，恭喜发财！"大家都笑了。',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What does Xiao Ming conclude about different festivals?',
+      choices:['Different festivals have many things in common (有很多共同点)','Chinese festivals are better','Emirati festivals are more fun','They are completely different'],
+      ans:0, hint:'不同的节日有很多共同点！' },
+    { type:'reading',
+      passage:'法蒂玛第一次参加中国朋友的春节庆祝活动。小明的妈妈给法蒂玛介绍了春节的习俗：贴春联、贴"福"字、挂灯笼、放鞭炮、发红包、包饺子、吃年夜饭，还有守岁。法蒂玛说："我们阿联酋过开斋节，也是家人团聚，互送礼物，还有丰盛的食物。"小明说："看来，不同的节日有很多共同点！"法蒂玛得到了一个红包，她说："我很喜欢红包！祝大家新年快乐，恭喜发财！"大家都笑了。',
+      passageLabel:'Reading · 阅读理解',
+      stem:'What does Fatima say about Emirati Eid Al-Fitr?',
+      choices:['Family reunion, gift-giving, and special foods (家人团聚，互送礼物，丰盛食物)','Only fireworks','Only prayers','No special food'],
+      ans:0, hint:'也是家人团聚，互送礼物，还有丰盛的食物' },
+    { type:'hots',
+      stem:'Festivals connect people to their culture, identity, and community. Spring Festival (春节) and Eid Al-Fitr (开斋节) are both important to their cultures. <span class="cn">节日是文化的镜子。</span> Compare Spring Festival and Eid Al-Fitr. What shared values do they reflect? What makes each unique? Is it important to preserve traditional festival customs in a modern world?',
+      prompts:['List at least 3 similarities and 3 differences between 春节 and 开斋节.','Use: 不但……而且……, 虽然……但是……, 要……了 in your response.','Think: what would happen if festivals disappeared? What would we lose?'],
+      hint:'Strong answers compare specific customs and connect them to deeper cultural values like family, generosity, and community.' },
+  ]},
+]},
+
+]; // END LESSONS
+let selectedLesson = 0, selectedTier = 0;
+let currentQs = [], qIndex = 0, score = 0;
+let timerInterval = null, secondsLeft = 900;
+let responses = []; // stores {userIdx/userText/correct/...} per question
+
+// ── Build Setup UI ──
+function buildSetup() {
+  // Event delegation on document - works in all sandbox environments
+  document.addEventListener('click', function(e) {
+    // Lesson card click
+    var lc = e.target.closest('.lesson-card');
+    if (lc) {
+      var cards = document.querySelectorAll('.lesson-card');
+      for (var ci = 0; ci < cards.length; ci++) {
+        if (cards[ci] === lc) { selectLesson(ci); break; }
+      }
+      return;
+    }
+    // Tier card click
+    var tc = e.target.closest('.tier-card');
+    if (tc) {
+      var tcs = document.querySelectorAll('.tier-card');
+      for (var ti = 0; ti < tcs.length; ti++) {
+        if (tcs[ti] === tc) { setTier(ti); break; }
+      }
+      return;
+    }
+    // Start button
+    if (e.target.closest('#startBtn')) { goToStudentInfo(); return; }
+    // SI confirm
+    if (e.target.closest('#siStartBtn')) { confirmStudentInfo(); return; }
+    // SI back
+    if (e.target.closest('#siBackLink')) { backToSetup(); return; }
+  });
+
+  // Populate mobile lesson dropdown
+  var sel = document.getElementById('lessonSelect');
+  if (sel) {
+    sel.innerHTML = '';
+    LESSONS.forEach(function(l, i) {
+      var opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = l.num + ' · ' + l.cn;
+      sel.appendChild(opt);
+    });
+    sel.addEventListener('change', function() { selectLesson(parseInt(sel.value)); });
+  }
+  // Mobile tier dropdown
+  var tsel = document.getElementById('tierSelect');
+  if (tsel) {
+    tsel.addEventListener('change', function() { setTier(parseInt(tsel.value)); });
+  }
+}
+
+function selectLesson(i) {
+  selectedLesson = i;
+  document.querySelectorAll('.lesson-card').forEach((el,j) => el.classList.toggle('active', j===i));
+  const sel = document.getElementById('lessonSelect');
+  if (sel && sel.value !== String(i)) sel.value = String(i);
+}
+
+function setTier(i) {
+  selectedTier = i;
+  [0,1,2].forEach(j => {
+    const el = document.getElementById(`tc${j}`);
+    if (el) el.className = `tier-card ${'t1 t2 t3'.split(' ')[j]}${j===i?' active':''}`;
+  });
+  const tsel = document.getElementById('tierSelect');
+  if (tsel && tsel.value !== String(i)) tsel.value = String(i);
+}
+
+// ── Quiz Logic ──
+function startQuiz() {
+  const lesson = LESSONS[selectedLesson];
+  // Deep-clone questions so _rot / _choices don\'t persist across retries
+  currentQs = lesson.tiers[selectedTier].qs.map(q => Object.assign({}, q));
+  qIndex = 0; score = 0;
+  responses = new Array(currentQs.length).fill(null);
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('studentInfoScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'block';
+  const tierColors = ['tb-t1','tb-t2','tb-t3'];
+  const tierNames = ['Tier 1 · 迈向掌握','Tier 2 · 达到掌握','Tier 3 · 深度掌握'];
+  document.getElementById('qBadge').className = 'tier-badge ' + tierColors[selectedTier];
+  document.getElementById('qBadge').textContent = tierNames[selectedTier];
+  document.getElementById('progressFill').className = 'progress-fill ' + ['pf-t1','pf-t2','pf-t3'][selectedTier];
+  secondsLeft = 900;
+  startTimer();
+  renderQuestion();
+}
+
+function startTimer() {
+  clearInterval(timerInterval);
+  updateTimer();
+  timerInterval = setInterval(() => {
+    secondsLeft--;
+    updateTimer();
+    if (secondsLeft <= 0) { clearInterval(timerInterval); showResult(); }
+  }, 1000);
+}
+
+function updateTimer() {
+  const m = Math.floor(secondsLeft/60), s = secondsLeft%60;
+  const el = document.getElementById('timerDisplay');
+  el.textContent = `${m}:${s.toString().padStart(2,'0')}`;
+  const w = document.getElementById('timerWrap');
+  w.className = 'timer-wrap' + (secondsLeft<=120?' timer-urgent':secondsLeft<=240?' timer-warn':'');
+}
+
+function renderQuestion() {
+  const q = currentQs[qIndex];
+  document.getElementById('qCounter').textContent = `${qIndex+1} / ${currentQs.length}`;
+  const pct = (qIndex / currentQs.length) * 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  const mount = document.getElementById('qMount');
+
+  // For each mc/reading question, rotate choices so correct answer isn\'t always A
+  // We use a per-question rotation stored in q._rot (set once, stable per session)
+  if ((q.type === 'mc' || q.type === 'reading') && q._rot === undefined) {
+    // Assign rotation based on question index to spread answers evenly
+    q._rot = qIndex % 4;
+    const rot = q._rot;
+    // Rotate choices array so correct answer lands at position rot
+    const origAns = q.ans; // 0 = originally first choice is correct
+    // Build new order: put correct at position rot, others fill remaining slots
+    const newChoices = [];
+    const others = q.choices.filter((_, i) => i !== origAns);
+    for (let i = 0; i < 4; i++) {
+      if (i === rot) newChoices.push(q.choices[origAns]);
+      else newChoices.push(others.shift());
+    }
+    q._choices = newChoices;
+    q._ans = rot;
+  }
+
+  const typeLabels = {
+    mc: 'Multiple choice · 选择题',
+    fill: 'Fill in · 填空题',
+    match: 'Match · 连线题',
+    reading: 'Reading comprehension · 阅读理解',
+    hots: 'Critical thinking · 批判性思维'
+  };
+
+  let html = `<div class="q-card">
+    <div class="q-type-tag">${typeLabels[q.type] || q.type}</div>`;
+
+  // Reading passage with pinyin toggle
+  if (q.type === 'reading') {
+    const pid = `pinyin_${qIndex}`;
+    // Build passage with ruby markup for pinyin version
+    const passageWithPinyin = buildPassageWithPinyin(q.passage);
+    html += `<div class="pinyin-toggle-row">
+      <span class="reading-label" style="margin:0;">${q.passageLabel || 'Reading · 阅读理解'}</span>
+      <span style="flex:1"></span>
+      <span class="pinyin-toggle-label">拼音</span>
+      <label class="pinyin-switch">
+        <input type="checkbox" id="${pid}" onchange="togglePassagePinyin(this,'passage_${qIndex}')">
+        <span class="pinyin-slider"></span>
+      </label>
+    </div>
+    <div class="reading-passage passage-nopinyin" id="passage_${qIndex}">${passageWithPinyin}</div>${buildVocabGloss(q.passage)}`;
+  }
+
+  // HOTS box
+  if (q.type === 'hots') {
+    html += `<div class="hots-box">
+      <div class="hots-label">Critical / Creative Thinking · 批判性思维</div>
+      <div class="q-stem">${q.stem}</div>
+      <div class="hots-prompts">
+        ${q.prompts.map(p => `<div class="hots-prompt">💡 ${p}</div>`).join('')}
+      </div>
+    </div>
+    <div class="hint-toggle" onclick="toggleHint(this,'hint_${qIndex}')">
+      <span>💡 Show hint · 查看提示</span><span class="ht-arrow">▼</span>
+    </div>
+    <div class="hint-body" id="hint_${qIndex}">${q.hint}</div>
+    <textarea class="hots-open-input" id="hotsInput" placeholder="Write your thoughts here (minimum 30 characters) · 在这里写下你的想法（至少30个字符）…"></textarea>
+    <button class="hots-submit-btn" onclick="submitHOTS()">Submit · 提交</button>
+    <div class="hots-submitted" id="hotsSubmitted">✓ Response recorded · 已记录</div>`;
+  } else {
+    html += `<div class="q-stem">${q.stem}</div>`;
+    html += `<div class="hint-toggle" onclick="toggleHint(this,'hint_${qIndex}')">
+      <span>💡 Show hint · 查看提示</span><span class="ht-arrow">▼</span>
+    </div>
+    <div class="hint-body" id="hint_${qIndex}">${q.hint}</div>`;
+  }
+
+  if (q.type === 'mc' || q.type === 'reading') {
+    const keys = ['A','B','C','D'];
+    const displayChoices = q._choices || q.choices;
+    const displayAns = (q._ans !== undefined) ? q._ans : q.ans;
+    html += `<div class="options-grid">` + displayChoices.map((c,i) =>
+      `<button class="opt-btn" id="opt${i}" onclick="answerMC(${i},${displayAns})">
+        <span class="opt-key">${keys[i]}</span><span class="opt-text">${c}</span>
+      </button>`).join('') + `</div>`;
+  } else if (q.type === 'fill') {
+    html += `<div class="fill-wrap">
+      <input class="fill-input" id="fillIn" placeholder="Type your answer here · 在此输入答案" onkeydown="if(event.key==='Enter')checkFill()">
+      <button class="submit-btn" onclick="checkFill()">提交 Submit</button>
+    </div>`;
+  } else if (q.type === 'match') {
+    const shuffled = [...q.right].sort(() => Math.random() - .5);
+    html += `<div class="match-wrap">
+      <div><div class="match-col-label">Chinese 中文</div><div class="match-col">` +
+      q.left.map((l,i) => `<div class="match-item" id="ml${i}" onclick="selectMatchLeft(${i})">${l}</div>`).join('') +
+      `</div></div><div><div class="match-col-label">English 英文</div><div class="match-col">` +
+      shuffled.map((r,i) => `<div class="match-item" id="mr${i}" onclick="selectMatchRight(${i},'${r.replace(/'/g,"\\'")}')\" data-val="${r.replace(/"/g,'&quot;')}">${r}</div>`).join('') +
+      `</div></div></div><button class="match-check-btn" onclick="checkMatch()">Check 检查</button>`;
+    window._shuffled = shuffled; window._matchCorrect = {}; window._matchPairs = {}; window._matchSelected = { l:null, r:null };
+  }
+
+  if (q.type !== 'hots') {
+    html += `<div class="feedback" id="fb"></div>`;
+  }
+
+  html += `</div>
+  <button class="next-btn" id="nextBtn" onclick="nextQ()">${qIndex < currentQs.length-1 ? '下一题 Next →' : '查看成绩 See results →'}</button>`;
+  mount.innerHTML = html;
+}
+
+// ── PINYIN DICTIONARY — word-level, for 1A reading passages ──────
+const PINYIN_DICT = {
+  // ── Names ─────────────────────────────────────────────────────
+  '小明':'Xiǎomíng','小红':'Xiǎohóng','小华':'Xiǎohuá','小丽':'Xiǎolì',
+  '阿里':'Ālǐ','哈桑':'Hāsāng','法蒂玛':'Fǎdìmǎ','哈立德':'Hālìdé','玛丽亚':'Mǎlìyà',
+  '布吉哈利法':'Bùjíhālìfǎ',
+  // ── Countries & cities ────────────────────────────────────────
+  '中国人':'Zhōngguórén','阿联酋人':'Āliánqiúrén',
+  '中国':'Zhōngguó','阿联酋':'Āliánqiú','迪拜':'Díbài','上海':'Shànghǎi',
+  '北京':'Běijīng','阿布扎比':'Ābùzhābǐ','成都':'Chéngdū','四川':'Sìchuān',
+  '泰国':'Tàiguó','外滩':'Wàitān',
+  // ── Lesson 1 leisure ──────────────────────────────────────────
+  '太极拳':'tàijíquán','太极':'tàijí','沙漠露营':'shāmò lùyíng',
+  '休闲活动':'xiūxián huódòng','休闲':'xiūxián',
+  '逛街':'guàngjiē','聊天':'liáotiān','爬山':'páshān','冲浪':'chōnglàng',
+  '武术':'wǔshù','游泳':'yóuyǒng','跳舞':'tiàowǔ','跑步':'pǎobù',
+  '露营':'lùyíng','享受':'xiǎngshòu','时光':'shíguāng',
+  '周末':'zhōumò','常常':'chángcháng','经常':'jīngcháng',
+  '有时候':'yǒu shíhou','很少':'hěn shǎo','总是':'zǒngshì',
+  '爷爷':'yéye','妈妈':'māma','奶奶':'nǎinai','公园':'gōngyuán',
+  '打太极拳':'dǎ tàijíquán','做运动':'zuò yùndòng',
+  '运动':'yùndòng','运':'yùn','动':'dòng',
+  // ── Lesson 2 location ─────────────────────────────────────────
+  '洗手间':'xǐshǒujiān','图书馆':'túshūguǎn',
+  '里边':'lǐbiān','外边':'wàibiān','前边':'qiánbiān','后边':'hòubiān',
+  '左边':'zuǒbiān','右边':'yòubiān','上边':'shàngbiān','下边':'xiàbiān',
+  '中间':'zhōngjiān','里面':'lǐmiàn','外面':'wàimiàn',
+  '上面':'shàngmiàn','下面':'xiàmiàn',
+  '教学楼':'jiàoxuélóu','操场':'cāochǎng','布局':'bùjú',
+  '迷路':'mílù','进门':'jìnmén','右手边':'yòushǒubiān',
+  // ── Lesson 3 directions ───────────────────────────────────────
+  '地铁站':'dìtiězhàn','地铁':'dìtiě',
+  '怎么走':'zěnme zǒu','往前走':'wǎng qián zǒu',
+  '左转':'zuǒ zhuǎn','右转':'yòu zhuǎn',
+  '红绿灯':'hónglǜdēng','路口':'lùkǒu','路边':'lùbiān',
+  '第一个':'dì yī gè','第二个':'dì èr gè',
+  '大概':'dàgài','顺利':'shùnlì','热情':'rèqíng',
+  '按照':'ànzhào','指路':'zhǐlù','找到':'zhǎodào',
+  // ── Lesson 4 comparison 1 ─────────────────────────────────────
+  '旅行':'lǚxíng','比较':'bǐjiào','物价':'wùjià',
+  '高楼':'gāolóu','中心大厦':'zhōngxīn dàshà','大厦':'dàshà',
+  '有意思':'yǒu yìsi','沙漠':'shāmò',
+  // ── Lesson 5 comparison 2 ─────────────────────────────────────
+  '唐装':'Tángzhuāng','汉服':'Hànfú','书签':'shūqiān','扇子':'shànzi',
+  '试穿':'shìchuān','便宜':'piányi','漂亮':'piàoliang','老板':'lǎobǎn',
+  '传统服饰':'chuántǒng fúshì','传统':'chuántǒng','服饰':'fúshì',
+  '讲价':'jiǎngjià','打折':'dǎzhé',
+  // ── Lesson 6 experience ───────────────────────────────────────
+  '功夫熊猫':'Gōngfu Xióngmāo','功夫':'gōngfu','大熊猫':'dà xióngmāo',
+  '熊猫':'xióngmāo','国宝':'guóbǎo','特别':'tèbié','好看':'hǎokàn',
+  '饺子':'jiǎozi','竹子':'zhúzi','文化元素':'wénhuà yuánsù','了解':'liǎojiě',
+  '当然':'dāngrán','而且':'érqiě',
+  // ── Lesson 7 animals ──────────────────────────────────────────
+  '动物园':'dòngwùyuán','动物':'dòngwù','大象':'dàxiàng',
+  '狮子':'shīzi','豹子':'bàozi','老虎':'lǎohǔ','狼':'láng',
+  '猫':'māo','狗':'gǒu','兔子':'tùzi','鸟':'niǎo',
+  '照相':'zhàoxiàng','参观':'cāngguān','工作人员':'gōngzuò rényuán',
+  '星星':'xīngxīng','月月':'yuèyuè',
+  '神圣':'shénshèng','代表':'dàibiǎo','力量':'lìliang',
+  // ── Lesson 8 body parts ───────────────────────────────────────
+  '眼睛':'yǎnjing','鼻子':'bízi','耳朵':'ěrduo','嘴':'zuǐ',
+  '头发':'tóufa','腿':'tuǐ','手':'shǒu','脚':'jiǎo','脖子':'bózi',
+  '身体':'shēntǐ','皮肤':'pífū','尾巴':'wěiba','花纹':'huāwén',
+  '肩膀':'jiānbǎng',
+  '描述':'miáoshù','陆地':'lùdì','扇子':'shànzi',
+  // ── Lesson 9 illness ──────────────────────────────────────────
+  '头疼':'tóuténg','发烧':'fāshāo','生病':'shēngbìng','咳嗽':'késou',
+  '休息':'xiūxi','应该':'yīnggāi','热水':'rèshuǐ','水果':'shuǐguǒ',
+  '医生':'yīshēng','看病':'kànbìng','吃药':'chī yào',
+  '恢复':'huīfù','不舒服':'bù shūfu','关心':'guānxīn',
+  // ── Common multi-char words ───────────────────────────────────
+  '爸爸':'bàba','家人':'jiārén','告诉':'gàosu','自己':'zìjǐ',
+  '觉得':'juéde','知道':'zhīdào','喜欢':'xǐhuan','认为':'rènwéi',
+  '可以':'kěyǐ','因为':'yīnwèi','所以':'suǒyǐ','但是':'dànshì',
+  '虽然':'suīrán','而且':'érqiě','不但':'búdàn','如果':'rúguǒ',
+  '然后':'ránhòu','或者':'huòzhě','虽然':'suīrán',
+  '一样':'yīyàng','一起':'yìqǐ','已经':'yǐjīng','非常':'fēicháng',
+  '当然':'dāngrán','其实':'qíshí','太好了':'tài hǎo le',
+  '好久':'hǎo jiǔ','很多':'hěn duō','有名':'yǒumíng',
+  '真的':'zhēnde','真的吗':'zhēnde ma',
+  '对了':'duìle','说得对':'shuō de duì',
+  '按照':'ànzhào','顺利':'shùnlì',
+  '很顺利地':'hěn shùnlì de',
+  '快去':'kuài qù','好久没':'hǎojiǔ méi',
+  '它们':'tāmen',
+  // ── Pronouns ──────────────────────────────────────────────────
+  '我们':'wǒmen','你们':'nǐmen','他们':'tāmen','她们':'tāmen',
+  '我':'wǒ','你':'nǐ','他':'tā','她':'tā','它':'tā','您':'nín',
+  // ── Common verbs ──────────────────────────────────────────────
+  '告诉':'gàosu','来自':'láizì','住在':'zhùzài','学习':'xuéxí',
+  '打电话':'dǎ diànhuà','参观':'cāngguān',
+  '说':'shuō','问':'wèn','是':'shì','在':'zài','有':'yǒu','叫':'jiào',
+  '来':'lái','去':'qù','看':'kàn','学':'xué','吃':'chī','喝':'hē',
+  '买':'mǎi','找':'zhǎo','听':'tīng','想':'xiǎng','要':'yào',
+  '走':'zǒu','用':'yòng','做':'zuò','打':'dǎ','拿':'ná',
+  '送':'sòng','过':'guò','进':'jìn','出':'chū','到':'dào',
+  '得':'de','让':'ràng','叫':'jiào',
+  // ── Adjectives ────────────────────────────────────────────────
+  '漂亮':'piàoliang','便宜':'piányi','贵':'guì','快':'kuài','慢':'màn',
+  '大':'dà','小':'xiǎo','长':'cháng','短':'duǎn','高':'gāo','低':'dī',
+  '热':'rè','冷':'lěng','新':'xīn','旧':'jiù','多':'duō','少':'shǎo',
+  '好':'hǎo','不好':'bù hǎo','粗':'cū',
+  // ── Colours ───────────────────────────────────────────────────
+  '红色':'hóngsè','黑色':'hēisè','白色':'báisè','黄色':'huángsè',
+  '蓝色':'lánsè','灰色':'huīsè','绿色':'lǜsè',
+  '红':'hóng','黑':'hēi','白':'bái','黄':'huáng','蓝':'lán',
+  '灰':'huī','绿':'lǜ',
+  // ── Numbers & measure words ───────────────────────────────────
+  '一百':'yī bǎi','两百':'liǎng bǎi','三百':'sān bǎi',
+  '五百':'wǔ bǎi','二十':'èrshí','三十':'sānshí','五十':'wǔshí',
+  '一':'yī','二':'èr','两':'liǎng','三':'sān','四':'sì','五':'wǔ',
+  '六':'liù','七':'qī','八':'bā','九':'jiǔ','十':'shí',
+  '百':'bǎi','块':'kuài','元':'yuán','次':'cì','分':'fēn',
+  '个':'gè','只':'zhī','件':'jiàn','条':'tiáo','本':'běn',
+  '张':'zhāng','把':'bǎ','双':'shuāng','种':'zhǒng',
+  '分钟':'fēnzhōng','小时':'xiǎoshí',
+  // ── Time words ────────────────────────────────────────────────
+  '每天':'měitiān','今天':'jīntiān','明天':'míngtiān','昨天':'zuótiān',
+  '早上':'zǎoshang','上午':'shàngwǔ','下午':'xiàwǔ','晚上':'wǎnshang',
+  '第一次':'dì yī cì','第一':'dì yī',
+  // ── Structural/particles ──────────────────────────────────────
+  '的':'de','了':'le','过':'guo','着':'zhe','吗':'ma','呢':'ne',
+  '啊':'a','吧':'ba','也':'yě','都':'dōu','很':'hěn','不':'bù','没':'méi',
+  '和':'hé','还':'hái','再':'zài','就':'jiù','才':'cái','又':'yòu',
+  '还是':'háishi','因为':'yīnwèi','所以':'suǒyǐ',
+  // ── Single-char fallbacks ─────────────────────────────────────
+  '且':'qiě','东':'dōng','为':'wèi','久':'jiǔ','么':'me','之':'zhī',
+  '书':'shū','于':'yú','享':'xiǎng','亮':'liàng','什':'shén',
+  '介':'jiè','代':'dài','以':'yǐ','们':'men','件':'jiàn','价':'jià',
+  '位':'wèi','体':'tǐ','作':'zuò','儿':'er','光':'guāng','公':'gōng',
+  '关':'guān','出':'chū','分':'fēn','利':'lì','别':'bié','前':'qián',
+  '功':'gōng','十':'shí','厦':'shà','又':'yòu','受':'shòu',
+  '口':'kǒu','可':'kě','吉':'jí','后':'hòu','员':'yuán',
+  '周':'zhōu','哈':'hā','唐':'Táng','商':'shāng','喝':'hē',
+  '园':'yuán','图':'tú','圣':'shèng','地':'dì','场':'chǎng',
+  '复':'fù','夏':'xià','外':'wài','太':'tài','夫':'fū',
+  '头':'tóu','指':'zhǐ','按':'àn','新':'xīn','早':'zǎo',
+  '星':'xīng','更':'gèng','月':'yuè','服':'fú','末':'mò',
+  '术':'shù','朵':'duǒ','板':'bǎn','极':'jí','果':'guǒ',
+  '样':'yàng','格':'gé','楼':'lóu','概':'gài','次':'cì',
+  '正':'zhèng','武':'wǔ','水':'shuǐ','汉':'Hàn','沙':'shā',
+  '法':'Fǎ','泳':'yǒng','洗':'xǐ','浪':'làng','游':'yóu',
+  '滩':'tān','漂':'piāo','漠':'mò','灯':'dēng','点':'diǎn',
+  '烧':'shāo','热':'rè','然':'rán','照':'zhào','熊':'xióng',
+  '爬':'pá','爷':'yé','物':'wù','特':'tè','狮':'shī',
+  '猜':'cāi','猫':'māo','用':'yòng','电':'diàn','疼':'téng',
+  '病':'bìng','皮':'pí','真':'zhēn','神':'shén','种':'zhǒng',
+  '站':'zhàn','竹':'zhú','粗':'cū','素':'sù','红':'hóng',
+  '绍':'shào','经':'jīng','给':'gěi','绿':'lǜ','老':'lǎo',
+  '而':'ér','耳':'ěr','肤':'fū','能':'néng','腿':'tuǐ',
+  '舒':'shū','色':'sè','营':'yíng','虎':'hǔ','虽':'suī',
+  '装':'zhuāng','西':'xī','观':'guān','解':'jiě','认':'rèn',
+  '诉':'sù','话':'huà','该':'gāi','请':'qǐng','象':'xiàng',
+  '豹':'bào','走':'zǒu','路':'lù','身':'shēn','转':'zhuǎn',
+  '较':'jiào','边':'biān','进':'jìn','述':'shù','迷':'mí',
+  '送':'sòng','那':'nà','量':'liàng','钟':'zhōng','钱':'qián',
+  '铁':'tiě','长':'cháng','门':'mén','闲':'xián','间':'jiān',
+  '陆':'lù','露':'lù','顺':'shùn','食':'shí','饺':'jiǎo',
+  '馆':'guǎn','马':'mǎ','高':'gāo','鼻':'bí',
+  // ── More single chars from passages ──────────────────────────
+  '从':'cóng','先':'xiān','只':'zhǐ','对':'duì','比':'bǐ',
+  '如':'rú','上':'shàng','下':'xià','左':'zuǒ','右':'yòu',
+  '心':'xīn','多':'duō','像':'xiàng','课':'kè','趣':'qù',
+  '里':'lǐ','第':'dì','同':'tóng','最':'zuì','生':'shēng',
+  '活':'huó','记':'jì','住':'zhù','发':'fā','帮':'bāng',
+  '助':'zhù','表':'biǎo','示':'shì','每':'měi','天':'tiān',
+  '小':'xiǎo','时':'shí','候':'hòu','数':'shù','班':'bān',
+  '现':'xiàn','王':'Wáng','海':'hǎi','山':'shān','雨':'yǔ',
+  '孩':'hái','子':'zi','大':'dà','好':'hǎo','人':'rén',
+  '家':'jiā','岁':'suì','名':'míng','国':'guó',
+  // ── Additional chars found in passages ────────────────────────
+  '打':'dǎ','拳':'quán','吃':'chī','喝':'hē','买':'mǎi',
+  '什么':'shénme','为什么':'wèishénme','怎么':'zěnme',
+  '这么':'zhème','那么':'nàme','这样':'zhèyàng','那样':'nàyàng',
+  '这':'zhè','那':'nà','哪':'nǎ',
+  '找':'zhǎo','带':'dài','拍':'pāi','猜':'cāi',
+  '介绍':'jièshào','了解':'liǎojiě','完成':'wánchéng',
+  '结婚':'jiéhūn','见面':'jiànmiàn','洗澡':'xǐzǎo','放假':'fàngjià',
+  '帮忙':'bāngmáng',
+  // ── Passage-specific words ────────────────────────────────────
+  '老奶奶':'lǎo nǎinai','妈妈':'māma',
+  '商店':'shāngdiàn','价格':'jiàgé','食物':'shíwù',
+  '皮肤':'pífū','皮':'pí',
+  '描述':'miáoshù','猜猜':'cāicai','之一':'zhī yī',
+  '用来':'yòng lái','像两把':'xiàng liǎng bǎ',
+  '之一':'zhī yī',
+  '没有':'méiyǒu','不一样':'bù yīyàng','很像':'hěn xiàng',
+  '按照':'ànzhào','指路':'zhǐlù',
+  '过了':'guòle','走五分钟':'zǒu wǔ fēnzhōng',
+  '多长时间':'duō cháng shíjiān','走路':'zǒulù',
+  '不一样':'bù yīyàng',
+  '动物园里':'dòngwùyuán lǐ',
+  '中国文化':'Zhōngguó wénhuà',
+  '正在':'zhèngzài','吃竹子':'chī zhúzi',
+  '国宝':'guóbǎo','很多国家':'hěn duō guójiā',
+  '工作人员':'gōngzuò rényuán',
+  '发现':'fāxiàn','感冒':'gǎnmào',
+  '没去上学':'méi qù shàngxué',
+  '打电话':'dǎ diànhuà','不舒服':'bù shūfu',
+  '吃水果':'chī shuǐguǒ','关心':'guānxīn',
+  '谢谢':'xièxie',
+  // ── Tier2 & new passage additions ───────────────────────────────
+  '蜂蜜水': 'fēngmì shuǐ',
+  '蜂蜜': 'fēngmì',
+  '购物中心': 'gòuwù zhōngxīn',
+  '购物': 'gòuwù',
+  '餐馆': 'cānguǎn',
+  '中国餐馆': 'Zhōngguó cānguǎn',
+  '野生': 'yěshēng',
+  '保护': 'bǎohù',
+  '终于': 'zhōngyú',
+  '简单': 'jiǎndān',
+  '惊讶': 'jīngyà',
+  '网上': 'wǎngshàng',
+  '大自然': 'dàzìrán',
+  '自然': 'zìrán',
+  '放松': 'fàngsōng',
+  '愿意': 'yuànyì',
+  '亚洲': 'Yàzhōu',
+  '非洲': 'Fēizhōu',
+  '一共': 'yīgòng',
+  '可爱': 'kěài',
+  '教室': 'jiàoshì',
+  '校长室': 'xiàozhǎngshì',
+  '校长': 'xiàozhǎng',
+  '人口': 'rénkǒu',
+  '真正': 'zhēnzhèng',
+  '万': 'wàn',
+  '亚': 'yà',
+  '些': 'xiē',
+  '保': 'bǎo',
+  '共': 'gòng',
+  '千': 'qiān',
+  '单': 'dān',
+  '声': 'shēng',
+  '室': 'shì',
+  '惊': 'jīng',
+  '意': 'yì',
+  '愿': 'yuàn',
+  '护': 'hù',
+  '放': 'fàng',
+  '教': 'jiào',
+  '松': 'sōng',
+  '洲': 'zhōu',
+  '爱': 'ài',
+  '简': 'jiǎn',
+  '终': 'zhōng',
+  '网': 'wǎng',
+  '蜂': 'fēng',
+  '蜜': 'mì',
+  '讶': 'yà',
+  '购': 'gòu',
+  '野': 'yě',
+  '非': 'fēi',
+  '餐': 'cān',
+  '饭': 'fàn',
+  '饮': 'yǐn',
+
+  // ── 3B Lesson-specific vocabulary ─────────────────────────────
+  '弹得真好':'tán de zhēn hǎo','弹得':'tán de','弹':'tán',
+  '打篮球':'dǎ lánqiú','打网球':'dǎ wǎngqiú','打乒乓球':'dǎ pīngpāng qiú',
+  '篮球':'lánqiú','网球':'wǎngqiú','乒乓球':'pīngpāngqiú',
+  '不错':'búcuò','一般':'yībān','好听':'hǎotīng',
+  '弹钢琴':'tán gāngqín','钢琴':'gāngqín','古筝':'gǔzhēng','二胡':'èrhú',
+  '茉莉花':'Mòlìhuā','民族音乐':'mínzú yīnyuè','民间音乐':'mínjiān yīnyuè',
+  '乐器':'yuèqì','音乐会':'yīnyuèhuì','练习':'liànxí',
+  '进步':'jìnbù','坚持':'jiānchí','努力':'nǔlì',
+  '说汉语':'shuō Hànyǔ','汉语':'Hànyǔ','普通话':'pǔtōnghuà',
+  '说得很好':'shuō de hěn hǎo','跑步跑得':'pǎobù pǎo de',
+  '写汉字':'xiě Hànzì','汉字':'Hànzì','写字':'xiězì',
+  '越来越流利':'yuèlái yuè liúlì','流利':'liúlì',
+  '充实':'chōngshí','工整':'gōngzhěng','锻炼':'duànliàn',
+  '放学后':'fàngxué hòu','做功课':'zuò gōngkè','功课':'gōngkè',
+  '课余生活':'kèyú shēnghuó','补习班':'bǔxíbān',
+  '担心':'dānxīn','紧张':'jǐnzhāng','别担心':'bié dānxīn',
+  '复习':'fùxí','帮助':'bāngzhù',
+  '容易':'róngyì','有点儿':'yǒudiǎnr','一点儿也不':'yīdiǎnr yě bù',
+  '没关系':'méi guānxi','期中考试':'qīzhōng kǎoshì',
+  '互相':'hùxiāng','感谢':'gǎnxiè','对方':'duìfāng',
+  '哈利法塔':'Hālìfǎ tǎ','布吉哈利法':'Bùjí Hālìfǎ',
+  '全世界':'quán shìjiè','最高':'zuì gāo','参观':'cāngguān',
+  '虽然':'suīrán','但是':'dànshì','提议':'tíyì',
+  '建筑':'jiànzhù','观景台':'guānjǐngtái','高速电梯':'gāosù diàntī',
+  '壮观':'zhuàngguān','五颜六色':'wǔyán liùsè',
+  '期待':'qīdài','好主意':'hǎo zhǔyì','主意':'zhǔyì',
+  '灯光':'dēngguāng','灯笼':'dēnglong',
+  '因为':'yīnwèi','所以':'suǒyǐ',
+  '先学习':'xiān xuéxí','再运动':'zài yùndòng',
+  '散步':'sànbù','效率':'xiàolǜ','自律':'zìlǜ',
+  '附近':'fùjìn','一日之计在于晨':'yī rì zhī jì zài yú chén',
+  '春节':'Chūnjié','热闹':'rènao','贴春联':'tiē chūnlián',
+  '春联':'chūnlián','发红包':'fā hóngbāo','红包':'hóngbāo',
+  '放鞭炮':'fàng biānpào','鞭炮':'biānpào','挂灯笼':'guà dēnglong',
+  '守岁':'shǒusuì','年夜饭':'niányèfàn','除夕':'chúxī',
+  '包饺子':'bāo jiǎozi','贴福字':'tiē fú zì','窗花':'chuānghuā',
+  '节日':'jiérì','开斋节':'Kāizhāijié','中秋节':'Zhōngqiūjié',
+  '端午节':'Duānwǔjié','元宵节':'Yuánxiāojié',
+  '月饼':'yuèbǐng','粽子':'zòngzi','习俗':'xísú',
+  '共同点':'gòngtóngdiǎn','团聚':'tuánjù','家人团聚':'jiārén tuánjù',
+  '准备':'zhǔnbèi','放假':'fàngjià','重要':'zhòngyào',
+  '传统':'chuántǒng','文化':'wénhuà','庆祝':'qìngzhù',
+  '做客':'zuòkè','介绍':'jièshào','丰盛':'fēngshèng',
+  '互送礼物':'hù sòng lǐwù','礼物':'lǐwù',
+  '恭喜发财':'gōngxǐ fācái','新年快乐':'xīnnián kuàilè',
+  '快到了':'kuài dào le','要到了':'yào dào le',
+
+  // ── 3B passage coverage additions ──────────────────────────
+  '163层':'163 céng',
+  '828米':'828 mǐ',
+  '一共':'yīgòng',
+  '一场':'yī chǎng',
+  '一定':'yīdìng',
+  '一日之计在于晨':'yī rì zhī jì zài yú chén',
+  '一首':'yī shǒu',
+  '上周':'shàng zhōu',
+  '两年':'liǎng nián',
+  '丰盛':'fēngshèng',
+  '临':'lín',
+  '举':'jǔ',
+  '举办':'jǔbàn',
+  '乐':'yuè',
+  '习俗':'xísú',
+  '买票':'mǎi piào',
+  '互相':'hùxiāng',
+  '互送礼物':'hù sòng lǐwù',
+  '今':'jīn',
+  '今晚':'jīnwǎn',
+  '会':'huì',
+  '信':'xìn',
+  '修':'xiū',
+  '做客':'zuòkè',
+  '充实':'chōngshí',
+  '全':'quán',
+  '全世界':'quán shìjiè',
+  '全部':'quánbù',
+  '共同点':'gòngtóngdiǎn',
+  '内':'nèi',
+  '内容':'nèiróng',
+  '写':'xiě',
+  '写起来':'xiě qǐlai',
+  '写错':'xiě cuò',
+  '准备':'zhǔnbèi',
+  '凉':'liáng',
+  '凉快':'liángkuai',
+  '几':'jǐ',
+  '办':'bàn',
+  '功课':'gōngkè',
+  '加':'jiā',
+  '加油':'jiāyóu',
+  '包':'bāo',
+  '包括':'bāokuò',
+  '包饺子':'bāo jiǎozi',
+  '半':'bàn',
+  '半个小时':'bàn gè xiǎoshí',
+  '参':'cān',
+  '参加':'cānjiā',
+  '发红包':'fā hóngbāo',
+  '发音':'fāyīn',
+  '句':'jù',
+  '句子':'jùzi',
+  '只要坚持':'zhǐyào jiānchí',
+  '吃年夜饭':'chī niányèfàn',
+  '坐':'zuò',
+  '壮观':'zhuàngguān',
+  '够':'gòu',
+  '奶奶':'nǎinai',
+  '学会':'xuéhuì',
+  '守岁':'shǒusuì',
+  '安':'ān',
+  '安排':'ānpái',
+  '完':'wán',
+  '完成':'wánchéng',
+  '定':'dìng',
+  '容':'róng',
+  '容量':'róngliàng',
+  '层':'céng',
+  '工整':'gōngzhěng',
+  '师':'shī',
+  '常':'cháng',
+  '常常':'chángcháng',
+  '年':'nián',
+  '年夜饭':'niányèfàn',
+  '庆祝活动':'qìngzhù huódòng',
+  '开斋节':'Kāizhāijié',
+  '往':'wǎng',
+  '往往':'wǎngwǎng',
+  '思':'sī',
+  '恭喜发财':'gōngxǐ fācái',
+  '意思':'yìsi',
+  '感谢':'gǎnxiè',
+  '懂':'dǒng',
+  '懂得':'dǒngde',
+  '才艺':'cáiyì',
+  '括':'kuò',
+  '挂':'guà',
+  '挂灯笼':'guà dēnglong',
+  '排':'pái',
+  '排队':'páiduì',
+  '改':'gǎi',
+  '改变':'gǎibiàn',
+  '放学':'fàngxué',
+  '放鞭炮':'fàng biānpào',
+  '效率':'xiàolǜ',
+  '散步':'sànbù',
+  '新年快乐':'xīnnián kuàilè',
+  '晚':'wǎn',
+  '晚上':'wǎnshang',
+  '期中考试':'qīzhōng kǎoshì',
+  '来临':'láilín',
+  '楚':'chǔ',
+  '欣':'xīn',
+  '欣赏':'xīnshǎng',
+  '歌':'gē',
+  '歌词':'gēcí',
+  '每天':'měitiān',
+  '每天练习':'měitiān liànxí',
+  '民':'mín',
+  '民歌':'míngē',
+  '汉字':'Hànzì',
+  '汉字写起来':'Hànzì xiě qǐlai',
+  '没关系':'méi guānxi',
+  '没想到':'méi xiǎngdào',
+  '流利':'liúlì',
+  '清':'qīng',
+  '清楚':'qīngchǔ',
+  '玩':'wán',
+  '相':'xiāng',
+  '相信':'xiāngxìn',
+  '看来':'kànlai',
+  '祝':'zhù',
+  '票':'piào',
+  '福':'fú',
+  '福气':'fúqi',
+  '笑':'xiào',
+  '笑了':'xiào le',
+  '等':'děng',
+  '米':'mǐ',
+  '紧张':'jǐnzhāng',
+  '练习':'liànxí',
+  '继':'jì',
+  '继续':'jìxù',
+  '续':'xù',
+  '美':'měi',
+  '美丽':'měilì',
+  '老师':'lǎoshī',
+  '考':'kǎo',
+  '考试':'kǎoshì',
+  '自律':'zìlǜ',
+  '观景台':'guānjǐngtái',
+  '词':'cí',
+  '试':'shì',
+  '贴':'tiē',
+  '贴春联':'tiē chūnlián',
+  '贴福字':'tiē fú zì',
+  '赏':'shǎng',
+  '赏月':'shǎng yuè',
+  '起':'qǐ',
+  '越':'yuè',
+  '跑':'pǎo',
+  '进步':'jìnbù',
+  '选':'xuǎn',
+  '选修':'xuǎnxiū',
+  '通':'tōng',
+  '通常':'tōngcháng',
+  '通过':'tōngguò',
+  '错':'cuò',
+  '错误':'cuòwù',
+  '锻炼':'duànliàn',
+  '难':'nán',
+  '需':'xū',
+  '需要':'xūyào',
+  '音':'yīn',
+  '音乐':'yīnyuè',
+  '首':'shǒu',
+  '高兴':'gāoxìng',
+  '高速电梯':'gāosù diàntī',
+  // ── Final missing single chars ────────────────────────────────────────────
+  '中':'zhōng','兴':'xīng','友':'yǒu','城':'chéng','字':'zì',
+  '市':'shì','影':'yǐng','文':'wén','朋':'péng','校':'xiào',
+};
+
+// ── Build passage as word-blocks with py / ch spans ───────────────
+// Output: <div class="passage-body">  <span class="w"><span class="py">pīnyīn</span><span class="ch">汉字</span></span> ... </div>
+
+// ── Above-HSK3 vocabulary in reading passages ──────────────────
+const ABOVE_HSK3 = {
+  '壮观': ['HSK5', 'spectacular / magnificent'],
+  '充实': ['HSK5', 'fulfilling / enriching'],
+  '工整': ['HSK5', 'neat and tidy (handwriting)'],
+  '流利': ['HSK4', 'fluent'],
+  '欣赏': ['HSK4', 'to appreciate / enjoy'],
+  '自律': ['HSK5', 'self-disciplined'],
+  '效率': ['HSK5', 'efficiency'],
+  '期待': ['HSK4', 'to look forward to'],
+  '提议': ['HSK5', 'to suggest / propose'],
+  '惊讶': ['HSK4', 'surprised / amazed'],
+  '庆祝': ['HSK4', 'to celebrate'],
+  '丰盛': ['HSK5', 'abundant / lavish (food)'],
+  '习俗': ['HSK4', 'custom / tradition'],
+  '进步': ['HSK4', 'progress / to improve'],
+  '坚持': ['HSK4', 'to persist / keep going'],
+  '相信': ['HSK4', 'to believe / trust'],
+  '互相': ['HSK4', 'mutually / each other'],
+  '感谢': ['HSK4', 'to thank / be grateful'],
+  '共同': ['HSK4', 'common / shared'],
+  '举办': ['HSK4', 'to hold (an event)'],
+  '选修': ['HSK5', 'elective course'],
+  '包括': ['HSK4', 'to include / including'],
+  '通常': ['HSK4', 'usually / normally'],
+  '凉快': ['HSK4', 'cool and refreshing'],
+  '继续': ['HSK4', 'to continue'],
+  '清楚': ['HSK4', 'clear / clearly'],
+  '散步': ['HSK4', 'to take a walk / stroll'],
+};
+
+function buildVocabGloss(passage) {
+  const found = [];
+  for (const [word, info] of Object.entries(ABOVE_HSK3)) {
+    if (passage.includes(word)) {
+      found.push({ word, level: info[0], meaning: info[1] });
+    }
+  }
+  if (found.length === 0) return '';
+  const items = found.map(f =>
+    `<span class="vocab-gloss-item">` +
+    `<span class="vg-word">${f.word}</span>` +
+    `<span class="vg-level">${f.level}</span>` +
+    `<span class="vg-meaning">${f.meaning}</span>` +
+    `</span>`
+  ).join('');
+  return `<div class="vocab-gloss">` +
+    `<div class="vocab-gloss-label">📚 Above HSK 3 · 超纲词汇注释</div>` +
+    `<div class="vocab-gloss-items">${items}</div>` +
+    `</div>`;
+}
+
+function buildPassageWithPinyin(passage) {
+  // Strip any existing ruby markup (from L1 hand-coded version)
+  const plain = passage.replace(/<ruby>/g,'').replace(/<\/ruby>/g,'')
+                        .replace(/<rt>[^<]*<\/rt>/g,'').replace(/<[^>]+>/g,'');
+
+  // Sort dict keys longest first to greedily match multi-char words
+  const keys = Object.keys(PINYIN_DICT).sort((a,b) => b.length - a.length);
+
+  // Tokenise: scan left-to-right, greedily match dict entries or single chars
+  const tokens = []; // { ch, py, isPunct, isBreak }
+  const PUNCT = /^[。，！？、：；""''「」【】()（）…—\n\r]+/;
+  let i = 0;
+  while (i < plain.length) {
+    // Newline → sentence break token
+    if (plain[i] === '\n' || plain[i] === '\r') {
+      tokens.push({ isBreak: true });
+      i++; continue;
+    }
+    // Punctuation
+    const pm = plain.slice(i).match(PUNCT);
+    if (pm) {
+      tokens.push({ ch: pm[0], py: '', isPunct: true });
+      i += pm[0].length; continue;
+    }
+    // Try dict match (longest first)
+    let matched = false;
+    for (const k of keys) {
+      if (plain.startsWith(k, i)) {
+        tokens.push({ ch: k, py: PINYIN_DICT[k] });
+        i += k.length; matched = true; break;
+      }
+    }
+    if (!matched) {
+      // Single character — no pinyin annotation
+      tokens.push({ ch: plain[i], py: '' });
+      i++;
+    }
+  }
+
+  // Render tokens as word-block spans
+  let html = '<div class="passage-body">';
+  for (const t of tokens) {
+    if (t.isBreak) {
+      html += '<span class="w brk"></span>';
+    } else if (t.isPunct) {
+      html += `<span class="w punct"><span class="py"></span><span class="ch">${t.ch}</span></span>`;
+    } else {
+      html += `<span class="w"><span class="py">${t.py}</span><span class="ch">${t.ch}</span></span>`;
+    }
+  }
+  html += '</div>';
+  return html;
+}
+
+function togglePassagePinyin(checkbox, passageId) {
+  const el = document.getElementById(passageId);
+  if (!el) return;
+  if (checkbox.checked) {
+    el.classList.remove('passage-nopinyin');
+  } else {
+    el.classList.add('passage-nopinyin');
+  }
+}
+
+function toggleHint(btn, hintId) {
+  const hintEl = document.getElementById(hintId);
+  if (!hintEl) return;
+  const isOpen = hintEl.classList.contains('show');
+  hintEl.classList.toggle('show', !isOpen);
+  btn.classList.toggle('open', !isOpen);
+  btn.querySelector('span:first-child').textContent = isOpen ? '💡 Show hint · 查看提示' : '💡 Hide hint · 隐藏提示';
+}
+
+function answerMC(i, correctIdx) {
+  const q = currentQs[qIndex];
+  const displayChoices = q._choices || q.choices;
+  document.querySelectorAll('.opt-btn').forEach(b => b.disabled = true);
+  const isCorrect = i === correctIdx;
+  if (isCorrect) { score++; document.getElementById(`opt${i}`).className = 'opt-btn correct'; }
+  else {
+    document.getElementById(`opt${i}`).className = 'opt-btn wrong';
+    document.getElementById(`opt${correctIdx}`).className = 'opt-btn correct';
+  }
+  playSound(isCorrect ? 'correct' : 'wrong');
+  // Record response
+  responses[qIndex] = { userIdx: i, correct: isCorrect, userLabel: displayChoices[i], correctLabel: displayChoices[correctIdx] };
+  showFeedback(isCorrect, displayChoices[correctIdx]);
+  document.getElementById('nextBtn').style.display = 'block';
+}
+
+function checkFill() {
+  const q = currentQs[qIndex];
+  const val = document.getElementById('fillIn').value.trim();
+  const correct = q.ans.some(a => val === a || val.toLowerCase() === a.toLowerCase());
+  document.getElementById('fillIn').className = 'fill-input ' + (correct?'correct':'wrong');
+  document.getElementById('fillIn').disabled = true;
+  document.querySelector('.submit-btn').disabled = true;
+  if (correct) score++;
+  playSound(correct ? 'correct' : 'wrong');
+  responses[qIndex] = { userText: val, correct, correctLabel: q.ans[0] };
+  showFeedback(correct, q.ans[0]);
+  document.getElementById('nextBtn').style.display = 'block';
+}
+
+function selectMatchLeft(i) {
+  window._matchSelected.l = i;
+  document.querySelectorAll('[id^="ml"]').forEach((el,j) => {
+    if (!el.classList.contains('matched')) el.classList.toggle('selected', j===i);
+  });
+  tryMatch();
+}
+
+function selectMatchRight(i, val) {
+  window._matchSelected.r = { i, val };
+  document.querySelectorAll('[id^="mr"]').forEach((el,j) => {
+    if (!el.classList.contains('matched')) el.classList.toggle('selected', j===i);
+  });
+  tryMatch();
+}
+
+function tryMatch() {
+  const { l, r } = window._matchSelected;
+  if (l === null || r === null) return;
+  // If left item already paired, unlink its previous right partner first
+  if (window._matchPairs[l] !== undefined) {
+    const oldRi = window._matchPairs[l];
+    const oldREl = document.getElementById(`mr${oldRi}`);
+    if (oldREl) { oldREl.classList.remove('selected','paired-right'); }
+  }
+  // If right item already claimed by another left, unlink that left first
+  for (const li in window._matchPairs) {
+    if (window._matchPairs[li] === r.i) {
+      document.getElementById(`ml${li}`) && document.getElementById(`ml${li}`).classList.remove('selected','paired-left');
+      delete window._matchPairs[li];
+    }
+  }
+  // Record the pairing (no correctness check yet)
+  window._matchPairs[l] = r.i;
+  document.getElementById(`ml${l}`).classList.remove('selected');
+  document.getElementById(`ml${l}`).classList.add('paired-left');
+  document.getElementById(`mr${r.i}`).classList.remove('selected');
+  document.getElementById(`mr${r.i}`).classList.add('paired-right');
+  window._matchSelected = { l:null, r:null };
+}
+
+function checkMatch() {
+  const q = currentQs[qIndex];
+  const pairedCount = Object.keys(window._matchPairs).length;
+  if (pairedCount < q.left.length) {
+    const fb = document.getElementById('fb');
+    if (fb) { fb.className = 'feedback show bad'; fb.textContent = '⚠ 请完成所有配对后再检查 · Please match all pairs before checking'; }
+    return;
+  }
+  // Now reveal correct / wrong for each pair
+  let allCorrect = true;
+  for (let li = 0; li < q.left.length; li++) {
+    const ri = window._matchPairs[li];
+    const correctRight = q.right[q.pairs[li][1]];
+    const userRight = window._shuffled[ri];
+    const isCorrect = userRight === correctRight;
+    if (!isCorrect) allCorrect = false;
+    document.getElementById(`ml${li}`).className = 'match-item ' + (isCorrect ? 'matched' : 'wrong-match');
+    document.getElementById(`mr${ri}`).className = 'match-item ' + (isCorrect ? 'matched' : 'wrong-match');
+  }
+  if (allCorrect) score++;
+  playSound(allCorrect ? 'correct' : 'wrong');
+  showFeedback(allCorrect, q.left.map((l,i) => `${l} → ${q.right[q.pairs[i][1]]}`).join(' | '));
+  responses[qIndex] = { correct: allCorrect, correctLabel: q.left.map((l,i) => `${l} → ${q.right[q.pairs[i][1]]}`).join(', ') };
+  document.getElementById('nextBtn').style.display = 'block';
+  document.querySelectorAll('.match-item').forEach(el => el.style.pointerEvents = 'none');
+}
+
+function submitHOTS() {
+  const val = document.getElementById('hotsInput')?.value?.trim() || '';
+  if (val.length < 30) {
+    alert(`Please write at least 30 characters before submitting.\n请至少写30个字符再提交。\n(Current: ${val.length} characters)`);
+    return;
+  }
+  score++;
+  document.getElementById('hotsInput').disabled = true;
+  document.querySelector('.hots-submit-btn').style.display = 'none';
+  document.getElementById('hotsSubmitted').style.display = 'block';
+  responses[qIndex] = { correct: true, userText: val, isOpen: true };
+  document.getElementById('nextBtn').style.display = 'block';
+}
+
+function showFeedback(correct, correctAns) {
+  const fb = document.getElementById('fb');
+  if (!fb) return;
+  fb.className = 'feedback show ' + (correct?'ok':'bad');
+  fb.textContent = correct
+    ? '✓ Correct! 正确！'
+    : `✗ The answer is: ${correctAns || ''} · 正确答案是：${correctAns || ''}`;
+}
+
+function nextQ() {
+  playSound('click');
+  qIndex++;
+  if (qIndex >= currentQs.length) { clearInterval(timerInterval); showResult(); }
+  else renderQuestion();
+}
+
+function showResult() {
+  document.getElementById('quizScreen').style.display = 'none';
+  document.getElementById('resultScreen').style.display = 'block';
+  
+  const total = currentQs.length;
+  const pct = Math.round((score/total)*100);
+  const tierColors = ['ring-t1','ring-t2','ring-t3'];
+  document.getElementById('rRing').className = 'result-ring ' + tierColors[selectedTier];
+  document.getElementById('rRing').textContent = `${pct}%`;
+  document.getElementById('rTitle').textContent = score===total ? '优秀！Excellent!' : score>=total*0.7 ? '良好！Good work!' : '继续加油！Keep going!';
+  const tierNames = ['迈向掌握','达到掌握','深度掌握'];
+  const lesson = LESSONS[selectedLesson];
+  const nameTag = studentName ? ` · ${studentName} · ${studentClass}` : '';
+  document.getElementById('rSub').textContent = `${score} / ${total} correct · Tier ${selectedTier+1} · ${tierNames[selectedTier]} · ${lesson.num}: ${lesson.cn}${nameTag}`;
+  document.getElementById('rStars').textContent = score===total?'⭐⭐⭐':score>=total*0.7?'⭐⭐':'⭐';
+  const msgs = [
+    `Your score: <strong>${score}/${total}</strong>. Focus on key vocabulary from this lesson — recognising characters and sentence patterns is your first step. Keep reading aloud! 多读多看，积累词汇。`,
+    `Your score: <strong>${score}/${total}</strong>. You\'re applying sentence patterns well. Try creating your own sentences using the grammar from this lesson. 尝试自己造句练习！`,
+    `Your score: <strong>${score}/${total}</strong>. Excellent deeper understanding! You worked through extended questions, a reading passage, and a critical thinking challenge. Review any missed points and try expressing ideas in Chinese. 学以致用，继续深化！`,
+  ];
+  document.getElementById('rMsg').innerHTML = msgs[selectedTier];
+  playSound('complete');
+  // Build always-visible analytics panel
+  buildAnalyticsPanel();
+  // Show student survey
+  document.getElementById('studentSurveyWrap').style.display = 'block';
+}
+
+// (buildReviewPanel and toggleReview replaced by buildAnalyticsPanel above)
+
+function downloadAnswers() {
+  const lesson = LESSONS[selectedLesson];
+  const tierNames = ['Tier 1 · 迈向掌握','Tier 2 · 达到掌握','Tier 3 · 深度掌握'];
+  const now = new Date().toLocaleString();
+  let txt = `跨越丝路分层习题生成器 · 1A\n`;
+  txt += `Across the Silk Route — Answer Sheet\n`;
+  txt += `${'='.repeat(50)}\n`;
+  txt += `学生 Student: ${studentName||'—'}  班级 Class: ${studentClass||'—'}  学校 School: ${studentSchool||'—'}\n`;
+  txt += `Lesson: ${lesson.num} · ${lesson.title} (${lesson.cn})\n`;
+  txt += `Tier: ${tierNames[selectedTier]}\n`;
+  txt += `Score: ${score} / ${currentQs.length}\n`;
+  txt += `Date: ${now}\n`;
+  txt += `${'='.repeat(50)}\n\n`;
+
+  currentQs.forEach((q, i) => {
+    const r = responses[i];
+    const typeLabels = { mc:'MC 选择', fill:'Fill 填空', match:'Match 连线', reading:'Reading 阅读', hots:'HOTS 思维' };
+    const stemText = q.stem.replace(/<[^>]*>/g,'');
+    txt += `Q${i+1} [${typeLabels[q.type]||q.type}]\n`;
+    txt += `Question: ${stemText}\n`;
+
+    if (q.type === 'mc' || q.type === 'reading') {
+      const displayChoices = q._choices || q.choices;
+      const displayAns = (q._ans !== undefined) ? q._ans : q.ans;
+      txt += `Correct Answer: ${['A','B','C','D'][displayAns]}. ${displayChoices[displayAns]}\n`;
+      if (r) txt += `Your Answer:    ${['A','B','C','D'][r.userIdx]}. ${r.userLabel} ${r.correct?'✓':'✗'}\n`;
+      else txt += `Your Answer:    — Not answered\n`;
+    } else if (q.type === 'fill') {
+      txt += `Correct Answer: ${q.ans.join(' / ')}\n`;
+      txt += `Your Answer:    ${r?.userText || '— Not answered'} ${r?.correct?'✓':'✗'}\n`;
+    } else if (q.type === 'match') {
+      txt += `Correct Pairs:  ${q.left.map((l,j) => `${l} → ${q.right[q.pairs[j][1]]}`).join(' | ')}\n`;
+      txt += `Result:         ${r?.correct ? 'All correct ✓' : 'Not all matched ✗'}\n`;
+    } else if (q.type === 'hots') {
+      txt += `(Open response — no single correct answer)\n`;
+      txt += `Your Response:  ${r?.userText || '— Not submitted'}\n`;
+    }
+    txt += '\n';
+  });
+
+  txt += `${'='.repeat(50)}\n`;
+  txt += `Total Score: ${score} / ${currentQs.length} (${Math.round(score/currentQs.length*100)}%)\n`;
+
+  const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `答案_${lesson.id}_Tier${selectedTier+1}_${new Date().toISOString().slice(0,10)}.txt`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function retry() {
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('studentSurveyWrap').style.display = 'none';
+  
+  startQuiz();
+}
+
+function exitQuiz() {
+  if (!confirm('确定要返回设置吗？进度将不会保存。\nBack to settings? Your progress will not be saved.')) return;
+  clearInterval(timerInterval);
+  qIndex = 0; score = 0; responses = [];
+  document.getElementById('quizScreen').style.display = 'none';
+  
+  document.getElementById('setup').style.display = 'block';
+}
+
+function goBack() {
+  clearInterval(timerInterval);
+  document.getElementById('resultScreen').style.display = 'none';
+  document.getElementById('quizScreen').style.display = 'none';
+  
+  document.getElementById('studentSurveyWrap').style.display = 'none';
+  document.getElementById('setup').style.display = 'block';
+}
+
+
+function printWorksheet() {
+  const lesson = LESSONS[selectedLesson];
+  const tierNames = ['Tier 1 · 迈向掌握', 'Tier 2 · 达到掌握', 'Tier 3 · 深度掌握'];
+  const tierLabel = tierNames[selectedTier];
+  const date = new Date().toLocaleDateString('zh-CN');
+
+  // Strip HTML tags helper
+  function stripTags(s) { return s.replace(/<[^>]*>/g, ''); }
+
+  // Build question HTML for print
+  function buildQHTML(q, idx) {
+    const qn = 'Q' + (idx + 1);
+    const typeMap = { mc: '选择题 MC', fill: '填空题 Fill-in', match: '连线题 Matching', reading: '阅读题 Reading', hots: '思维题 HOTS' };
+    let h = '<div class="pq">';
+    h += '<div class="pq-num">' + qn + ' <span class="pq-type">' + (typeMap[q.type] || q.type) + '</span></div>';
+
+    if (q.type === 'reading') {
+      // Passage (strip ruby markup)
+      const passagePlain = (q.passage || '')
+        .replace(/<ruby>/g, '').replace(/<\/ruby>/g, '')
+        .replace(/<rt>[^<]*<\/rt>/g, '').replace(/<[^>]+>/g, '');
+      h += '<div class="ppassage"><div class="ppassage-lbl">📖 ' + (q.passageLabel || '阅读理解') + '</div>' + passagePlain + '</div>';
+      h += '<div class="pq-stem">' + stripTags(q.stem) + '</div>';
+      const choices = q._choices || q.choices || [];
+      h += '<div class="popts">';
+      ['A','B','C','D'].forEach(function(k, ci) {
+        if (choices[ci] !== undefined) h += '<div class="popt"><span class="popt-k">' + k + '.</span> ' + choices[ci] + '</div>';
+      });
+      h += '</div>';
+    } else if (q.type === 'mc') {
+      h += '<div class="pq-stem">' + stripTags(q.stem) + '</div>';
+      const choices = q._choices || q.choices || [];
+      h += '<div class="popts">';
+      ['A','B','C','D'].forEach(function(k, ci) {
+        if (choices[ci] !== undefined) h += '<div class="popt"><span class="popt-k">' + k + '.</span> ' + choices[ci] + '</div>';
+      });
+      h += '</div>';
+    } else if (q.type === 'fill') {
+      h += '<div class="pq-stem">' + stripTags(q.stem) + '</div>';
+      h += '<div class="pline"></div>';
+    } else if (q.type === 'match') {
+      h += '<div class="pq-stem">' + stripTags(q.stem) + '</div>';
+      // Shuffle right column for print version
+      const rightShuffled = q.right.slice().sort(function() { return Math.random() - 0.5; });
+      h += '<div class="pmatch">';
+      h += '<div class="pmatch-col"><div class="pmatch-hdr">中文</div>' + q.left.map(function(l) { return '<div class="pmatch-item">' + l + '</div>'; }).join('') + '</div>';
+      h += '<div class="pmatch-col"><div class="pmatch-hdr">English</div>' + rightShuffled.map(function(r) { return '<div class="pmatch-item">' + r + '</div>'; }).join('') + '</div>';
+      h += '</div>';
+    } else if (q.type === 'hots') {
+      h += '<div class="photsbox">';
+      h += '<div class="phots-lbl">💭 HOTS · 批判性思维</div>';
+      h += '<div class="pq-stem">' + stripTags(q.stem) + '</div>';
+      if (q.prompts && q.prompts.length) {
+        h += '<ul class="phots-prompts">' + q.prompts.map(function(p) { return '<li>' + p + '</li>'; }).join('') + '</ul>';
+      }
+      h += '</div>';
+      h += '<div class="pwrite-lines">';
+      for (var li = 0; li < 6; li++) h += '<div class="pwrite-line"></div>';
+      h += '</div>';
+    }
+
+    h += '</div>';
+    return h;
+  }
+
+  let qsHTML = '';
+  currentQs.forEach(function(q, i) { qsHTML += buildQHTML(q, i); });
+
+  const printHTML = '<!DOCTYPE html>\n<html lang="zh">\n<head>\n<meta charset="UTF-8">\n<title>试卷 ' + lesson.num + ' ' + tierLabel + '</title>\n<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">\n<style>\n* { box-sizing: border-box; margin: 0; padding: 0; }\nbody { font-family: "DM Sans", sans-serif; color: #1a1714; background: #fff; padding: 24px 32px; max-width: 780px; margin: 0 auto; }\n@media print { body { padding: 0; } }\n.header { border-bottom: 3px solid #1a1714; padding-bottom: 12px; margin-bottom: 16px; }\n.header h1 { font-size: 18px; font-weight: 700; font-family: "Noto Serif SC", serif; }\n.header .meta { font-size: 12px; color: #666; margin-top: 4px; }\n.student-row { display: flex; gap: 24px; margin-bottom: 20px; font-size: 13px; }\n.student-row .field { display: flex; align-items: center; gap: 6px; }\n.student-row .field-line { border-bottom: 1px solid #999; min-width: 120px; height: 20px; }\n.pq { margin-bottom: 24px; page-break-inside: avoid; }\n.pq-num { font-size: 12px; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 5px; }\n.pq-type { font-weight: 400; color: #888; font-size: 11px; }\n.pq-stem { font-size: 15px; line-height: 1.65; margin-bottom: 10px; font-family: "Noto Serif SC", serif; }\n.ppassage { background: #e8f7f0; border-left: 4px solid #1f8c5a; border-radius: 6px; padding: 10px 14px; margin-bottom: 10px; font-family: "Noto Serif SC", serif; font-size: 14px; line-height: 1.8; }\n.ppassage-lbl { font-size: 10px; font-weight: 700; color: #1f8c5a; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 6px; }\n.popts { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 16px; margin-left: 2px; }\n.popt { font-size: 13px; font-family: "Noto Serif SC", serif; padding: 3px 0; display: flex; gap: 6px; }\n.popt-k { font-weight: 700; min-width: 16px; }\n.pline { border-bottom: 1.5px solid #aaa; margin: 14px 0 4px; min-height: 26px; }\n.pmatch { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 6px; }\n.pmatch-col { display: flex; flex-direction: column; gap: 6px; }\n.pmatch-hdr { font-size: 11px; font-weight: 700; color: #777; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 2px; }\n.pmatch-item { border: 1.5px solid #ddd; border-radius: 6px; padding: 7px 12px; font-size: 14px; font-family: "Noto Serif SC", serif; text-align: center; background: #f9f9f9; }\n.photsbox { background: #fffbea; border-left: 4px solid #c9a227; border-radius: 6px; padding: 12px 14px; margin-bottom: 10px; }\n.phots-lbl { font-size: 10px; font-weight: 700; color: #c9a227; text-transform: uppercase; letter-spacing: .1em; margin-bottom: 6px; }\n.phots-prompts { margin: 8px 0 0 16px; font-size: 12px; color: #7a7570; }\n.phots-prompts li { margin-bottom: 4px; }\n.pwrite-lines { margin-top: 8px; }\n.pwrite-line { border-bottom: 1px solid #ccc; height: 30px; margin-bottom: 2px; }\n.footer { margin-top: 32px; padding-top: 10px; border-top: 1px solid #ddd; font-size: 11px; color: #aaa; display: flex; justify-content: space-between; }\n</style>\n</head>\n<body>\n<div class="header">\n  <h1>跨越丝路分层习题生成器 · 3B</h1>\n  <div class="meta">' + lesson.num + ' · ' + lesson.title + ' (' + lesson.cn + ') &nbsp;|&nbsp; ' + tierLabel + ' &nbsp;|&nbsp; 共 ' + currentQs.length + ' 题 &nbsp;|&nbsp; ' + date + '</div>\n</div>\n<div class="student-row">\n  <div class="field">姓名 Name: <div class="field-line"></div></div>\n  <div class="field">日期 Date: <div class="field-line"></div></div>\n  <div class="field">得分 Score: <div class="field-line"></div></div>\n</div>\n' + qsHTML + '\n<div class="footer"><span>跨越丝路分层习题生成器 · 3B</span><span>' + lesson.num + ' · ' + tierLabel + '</span><span>Across the Silk Route</span></div>\n</body>\n</html>';
+
+  const win = window.open('', '_blank', 'width=860,height=960');
+  if (!win) { alert('请允许弹出窗口后重试。\nPlease allow pop-ups and try again.'); return; }
+  win.document.write(printHTML);
+  win.document.close();
+  win.focus();
+  setTimeout(function() { win.print(); }, 900);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// STUDENT INFO
+// ══════════════════════════════════════════════════════════════════
+let studentName = '', studentClass = '', studentSchool = '';
+
+function goToStudentInfo() {
+  document.getElementById('setup').style.display = 'none';
+  document.getElementById('studentInfoScreen').style.display = 'block';
+}
+
+function backToSetup() {
+  document.getElementById('studentInfoScreen').style.display = 'none';
+  document.getElementById('setup').style.display = 'block';
+}
+
+function confirmStudentInfo() {
+  const name = document.getElementById('si_name').value.trim();
+  const cls  = document.getElementById('si_class').value.trim();
+  const sch  = document.getElementById('si_school').value.trim();
+  if (!name) {
+    document.getElementById('si_name').focus();
+    document.getElementById('si_name').style.borderColor = 'var(--wrong)';
+    setTimeout(()=>{ document.getElementById('si_name').style.borderColor=''; }, 1500);
+    return;
+  }
+  if (!cls) {
+    document.getElementById('si_class').focus();
+    document.getElementById('si_class').style.borderColor = 'var(--wrong)';
+    setTimeout(()=>{ document.getElementById('si_class').style.borderColor=''; }, 1500);
+    return;
+  }
+  studentName = name; studentClass = cls; studentSchool = sch;
+  document.getElementById('studentInfoScreen').style.display = 'none';
+  
+  startQuiz();
+}
+
+// ══════════════════════════════════════════════════════════════════
+// SOUND EFFECTS
+// ══════════════════════════════════════════════════════════════════
+let soundOn = true;
+
+function toggleSound() {
+  soundOn = !soundOn;
+  document.getElementById('soundBtn').textContent = soundOn ? '🔊 Sound ON' : '🔇 Sound OFF';
+}
+
+function playSound(type) {
+  if (!soundOn) return;
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    if (type === 'correct') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523, ctx.currentTime);
+      osc.frequency.setValueAtTime(659, ctx.currentTime + 0.12);
+      osc.frequency.setValueAtTime(784, ctx.currentTime + 0.24);
+      gain.gain.setValueAtTime(0.18, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.55);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.55);
+    } else if (type === 'wrong') {
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(220, ctx.currentTime);
+      osc.frequency.setValueAtTime(180, ctx.currentTime + 0.15);
+      gain.gain.setValueAtTime(0.14, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.4);
+    } else if (type === 'click') {
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(400, ctx.currentTime);
+      gain.gain.setValueAtTime(0.08, ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+      osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.1);
+    } else if (type === 'complete') {
+      // Victory fanfare
+      const notes = [523,659,784,1047];
+      notes.forEach((f,idx) => {
+        const o2 = ctx.createOscillator();
+        const g2 = ctx.createGain();
+        o2.connect(g2); g2.connect(ctx.destination);
+        o2.type = 'sine'; o2.frequency.value = f;
+        g2.gain.setValueAtTime(0.15, ctx.currentTime + idx*0.15);
+        g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx*0.15 + 0.25);
+        o2.start(ctx.currentTime + idx*0.15);
+        o2.stop(ctx.currentTime + idx*0.15 + 0.3);
+      });
+    }
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ANALYTICS — builds always-visible panel on result screen
+// ══════════════════════════════════════════════════════════════════
+function buildAnalyticsPanel() {
+  const panel = document.getElementById('analyticsPanel');
+  const lesson = LESSONS[selectedLesson];
+  const tierNames = ['Tier 1 · 迈向掌握','Tier 2 · 达到掌握','Tier 3 · 深度掌握'];
+  const total = currentQs.length;
+  const typeLabels = { mc:'MC 选择题', fill:'Fill 填空题', match:'Match 连线题', reading:'Reading 阅读题', hots:'HOTS 思维题' };
+
+  // ─ Per-question data
+  let wrongQs = [], correctCount = 0, typeStats = {};
+  currentQs.forEach((q, i) => {
+    const r = responses[i];
+    const isCorrect = r?.correct === true;
+    if (isCorrect) correctCount++;
+    else wrongQs.push({ q, i, r });
+    if (!typeStats[q.type]) typeStats[q.type] = { total:0, correct:0 };
+    typeStats[q.type].total++;
+    if (isCorrect) typeStats[q.type].correct++;
+  });
+
+  const pct = Math.round(correctCount/total*100);
+
+  // ─ Section 1: Q-by-Q review
+  let reviewHtml = '';
+  currentQs.forEach((q, i) => {
+    const r = responses[i];
+    const isCorrect = r?.correct === true;
+    const isOpen = q.type === 'hots';
+    const stemText = q.stem.replace(/<[^>]*>/g,'').slice(0,90) + (q.stem.replace(/<[^>]*>/g,'').length>90?'…':'');
+    let correctLabel = '', userLabel = '';
+    if (q.type==='mc'||q.type==='reading') {
+      const dc = q._choices||q.choices; const da = (q._ans!==undefined)?q._ans:q.ans;
+      correctLabel = `${['A','B','C','D'][da]}. ${dc[da]}`;
+      userLabel = r ? `${['A','B','C','D'][r.userIdx]}. ${r.userLabel}` : '— 未作答';
+    } else if (q.type==='fill') {
+      correctLabel = q.ans[0]; userLabel = r?.userText||'— 未作答';
+    } else if (q.type==='match') {
+      correctLabel = '全部正确配对'; userLabel = r?.correct?'✓ 全部正确':'✗ 部分错误';
+    } else if (q.type==='hots') {
+      correctLabel = '开放作答'; userLabel = r?.userText?'已提交 ✓':'— 未提交';
+    }
+    const iconClass = isOpen ? 'aq-open' : isCorrect ? 'aq-correct' : 'aq-wrong';
+    const iconChar = isOpen ? '💭' : isCorrect ? '✓' : '✗';
+    reviewHtml += `<div class="analytics-q-row">
+      <div class="analytics-q-icon ${iconClass}">${iconChar}</div>
+      <div class="analytics-q-body">
+        <div class="analytics-q-num">Q${i+1} · ${typeLabels[q.type]||q.type}</div>
+        <div class="analytics-q-stem">${stemText}</div>
+        <div class="analytics-q-ans">
+          <span class="aq-tag aq-right-tag">✓ ${correctLabel}</span>
+          <span class="aq-tag aq-user-tag ${isCorrect?'':'aq-wrong-tag'}">你的答案: ${userLabel}</span>
+        </div>
+      </div>
+    </div>`;
+  });
+
+  // ─ Section 2: Type-based strength bars
+  let strengthHtml = '';
+  Object.entries(typeStats).forEach(([type, stat]) => {
+    const pctT = Math.round(stat.correct/stat.total*100);
+    strengthHtml += `<div class="strength-bar">
+      <span class="strength-label">${typeLabels[type]||type}</span>
+      <div class="strength-track"><div class="strength-fill-${pctT>=60?'correct':'wrong'}" style="width:${pctT}%"></div></div>
+      <span style="font-size:12px;font-weight:700;color:${pctT>=60?'var(--correct)':'var(--wrong)'};min-width:36px">${pctT}%</span>
+    </div>`;
+  });
+
+  // ─ Section 3: Insight text
+  const strongTypes = Object.entries(typeStats).filter(([,s])=>s.correct/s.total>=0.7).map(([t])=>typeLabels[t]||t);
+  const weakTypes   = Object.entries(typeStats).filter(([,s])=>s.correct/s.total<0.5).map(([t])=>typeLabels[t]||t);
+  const studentLabel = studentName ? `<strong>${studentName}</strong>` : '你';
+  let insightText = `${studentLabel} 本次在 <strong>${lesson.num} · ${lesson.cn}</strong>（${tierNames[selectedTier]}）中得了 <strong>${correctCount}/${total}（${pct}%）</strong> 分。`;
+  if (strongTypes.length) insightText += ` 强项：${strongTypes.join('、')}。`;
+  if (weakTypes.length)   insightText += ` 需加强：<strong style="color:var(--wrong)">${weakTypes.join('、')}</strong>。建议重点复习错误题目，并完成下方的补弱练习。`;
+  else insightText += ' 整体表现良好，继续保持！';
+
+  // ─ Section 4: Remedial questions for wrong answers
+  let remedialHtml = '';
+  if (wrongQs.length > 0) {
+    const remedials = wrongQs.slice(0,4); // max 4 remedial Qs
+    remedials.forEach(({q, i}, ri) => {
+      if (q.type === 'mc' || q.type === 'reading') {
+        const dc = q._choices||q.choices; const da = (q._ans!==undefined)?q._ans:q.ans;
+        const stemText = q.stem.replace(/<[^>]*>/g,'');
+        remedialHtml += `<div class="remedial-q" id="rq${ri}">
+          <div class="remedial-q-label">补弱 Q${ri+1} · 重练错题 Retry Wrong Answer — ${typeLabels[q.type]}</div>
+          <div class="remedial-q-stem">${stemText}</div>
+          <div class="remedial-choices">
+            ${dc.map((c,ci) => `<button class="remedial-choice" id="rqc${ri}_${ci}" onclick="checkRemedial(${ri},${ci},${da})">${['A','B','C','D'][ci]}. ${c}</button>`).join('')}
+          </div>
+        </div>`;
+      } else if (q.type === 'fill') {
+        const stemText = q.stem.replace(/<[^>]*>/g,'');
+        remedialHtml += `<div class="remedial-q" id="rq${ri}">
+          <div class="remedial-q-label">补弱 Q${ri+1} · 重练错题 Retry Wrong Answer — Fill-in 填空</div>
+          <div class="remedial-q-stem">${stemText}</div>
+          <div style="display:flex;gap:8px;flex-direction:column">
+            <input class="fill-input" id="rqinput${ri}" placeholder="Write your answer · 填写答案" style="font-size:16px;padding:11px 14px;" onkeydown="if(event.key==='Enter')checkRemedialFill(${ri})">
+            <button class="submit-btn" onclick="checkRemedialFill(${ri})">提交 Submit</button>
+          </div>
+          <div class="feedback" id="rqfb${ri}" style="margin-top:8px;"></div>
+        </div>`;
+      }
+    });
+  } else {
+    remedialHtml = `<p style="color:var(--correct);font-weight:600;font-size:15px;text-align:center;padding:1rem;">🎉 全部答对，无需补弱练习！All answers correct — no remedial needed!</p>`;
+  }
+
+  panel.innerHTML = `
+    <div class="analytics-section">
+      <div class="analytics-section-title">📋 学情总览 · Learning Analysis</div>
+      <p class="analytics-insight" style="margin-bottom:1rem;">${insightText}</p>
+      ${strengthHtml}
+    </div>
+    <div class="analytics-section">
+      <div class="analytics-section-title">📝 逐题回顾 · Question-by-Question Review</div>
+      ${reviewHtml}
+    </div>
+    <div class="analytics-section">
+      <div class="analytics-section-title">🔧 补弱练习 · Remedial Practice</div>
+      ${remedialHtml}
+    </div>`;
+}
+
+function checkRemedial(ri, chosen, correct) {
+  const btns = document.querySelectorAll(`[id^="rqc${ri}_"]`);
+  btns.forEach(b => b.disabled = true);
+  btns.forEach((b,ci) => {
+    if (ci === correct) b.classList.add('rc-correct');
+    else if (ci === chosen && chosen !== correct) b.classList.add('rc-wrong');
+  });
+  playSound(chosen === correct ? 'correct' : 'wrong');
+}
+
+function checkRemedialFill(ri) {
+  const wrongQ = currentQs.filter(q => { const r = responses[currentQs.indexOf(q)]; return r&&!r.correct; })[ri];
+  if (!wrongQ) return;
+  const val = document.getElementById(`rqinput${ri}`)?.value.trim() || '';
+  const correct = wrongQ.ans.some(a => val.toLowerCase() === a.toLowerCase());
+  const fb = document.getElementById(`rqfb${ri}`);
+  if (fb) { fb.className='feedback show '+(correct?'ok':'bad'); fb.textContent = correct ? '✓ 正确！Correct!' : `✗ 正确答案: ${wrongQ.ans[0]}`; }
+  document.getElementById(`rqinput${ri}`).disabled = true;
+  playSound(correct ? 'correct' : 'wrong');
+}
+
+function downloadRemedial() {
+  const lesson = LESSONS[selectedLesson];
+  const tierNames = ['Tier 1 · 迈向掌握','Tier 2 · 达到掌握','Tier 3 · 深度掌握'];
+  let txt = `跨越丝路 · 补弱练习 Remedial Practice\n`;
+  txt += `${'='.repeat(50)}\n`;
+  txt += `学生 Student: ${studentName||'—'}  班级 Class: ${studentClass||'—'}  学校: ${studentSchool||'—'}\n`;
+  txt += `课时 Lesson: ${lesson.num} · ${lesson.cn}  |  Tier: ${tierNames[selectedTier]}\n`;
+  txt += `日期 Date: ${new Date().toLocaleString()}\n`;
+  txt += `${'='.repeat(50)}\n\n`;
+  txt += `以下是你做错的题目，请再次练习：\nThe following questions were answered incorrectly. Please retry:\n\n`;
+  let wrongCount = 0;
+  currentQs.forEach((q, i) => {
+    const r = responses[i];
+    if (!r || r.correct) return;
+    wrongCount++;
+    const stem = q.stem.replace(/<[^>]*>/g,'');
+    txt += `补弱Q${wrongCount} [${q.type}]\n问题: ${stem}\n`;
+    if (q.type==='mc'||q.type==='reading') {
+      const dc=q._choices||q.choices; const da=(q._ans!==undefined)?q._ans:q.ans;
+      ['A','B','C','D'].forEach((k,ci)=>{ if(dc[ci]) txt+=`  ${k}. ${dc[ci]}\n`; });
+      txt += `正确答案: ${['A','B','C','D'][da]}. ${dc[da]}\n`;
+      txt += `你的答案: ${['A','B','C','D'][r.userIdx]}. ${r.userLabel} ✗\n`;
+    } else if (q.type==='fill') {
+      txt += `正确答案: ${q.ans[0]}\n你的答案: ${r.userText||'—'} ✗\n`;
+    } else if (q.type==='match') {
+      txt += `正确配对: ${q.left.map((l,j)=>`${l}→${q.right[q.pairs[j][1]]}`).join(' | ')}\n`;
+    }
+    txt += '\n';
+  });
+  if (wrongCount === 0) txt += '🎉 全部正确！No remedial questions needed.\n';
+  const blob = new Blob([txt], { type:'text/plain;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href=url; a.download=`补弱_${studentName||'student'}_${lesson.id}_Tier${selectedTier+1}.txt`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// STUDENT SURVEY
+// ══════════════════════════════════════════════════════════════════
+const surveyData = {};
+
+function toggleSurveyBody() {
+  const body = document.getElementById('surveyBody');
+  const arrow = document.getElementById('surveyArrow');
+  const isOpen = body.style.display !== 'none';
+  body.style.display = isOpen ? 'none' : 'block';
+  arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
+}
+
+function selectSingle(qId, el) {
+  document.querySelectorAll(`#${qId} .survey-option`).forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  surveyData[qId] = el.textContent.trim();
+}
+
+function selectScale(qId, val) {
+  document.querySelectorAll(`#${qId} .survey-scale-btn`).forEach((b,i) => b.classList.toggle('selected', i+1===val));
+  surveyData[qId] = val;
+}
+
+function submitStudentSurvey() {
+  const required = ['sq1','sq2','sq3','sq4','sq5','sq6'];
+  const missing = required.filter(k => !surveyData[k]);
+  if (missing.length) {
+    const firstEl = document.getElementById(missing[0]);
+    firstEl.scrollIntoView({ behavior:'smooth', block:'center' });
+    firstEl.style.outline = '2px solid var(--wrong)';
+    setTimeout(()=>{ firstEl.style.outline=''; }, 1800);
+    alert('请完成所有必填项（带 * 号）后再提交。\nPlease answer all required questions (*) before submitting.');
+    return;
+  }
+  const suggestions = document.getElementById('survey_suggestions')?.value?.trim() || '';
+  const payload = {
+    type: '学生问卷 Student Survey',
+    student: studentName, class: studentClass, school: studentSchool,
+    lesson: LESSONS[selectedLesson]?.num + ' ' + LESSONS[selectedLesson]?.cn,
+    tier: ['Tier1','Tier2','Tier3'][selectedTier],
+    score: `${score}/${currentQs.length}`,
+    q1_overall: surveyData['sq1'],
+    q2_targeted: surveyData['sq2'],
+    q3_hsk_help: surveyData['sq3'],
+    q4_key_points: surveyData['sq4'],
+    q5_least_fav: surveyData['sq5'],
+    q6_most_fav: surveyData['sq6'],
+    suggestions: suggestions || '（无）',
+    submitted_at: new Date().toLocaleString()
+  };
+  const btn = document.querySelector('.survey-submit-btn');
+  btn.disabled = true; btn.textContent = '提交中… Submitting…';
+
+  // ──────────────────────────────────────────────────────────────
+  // Google Apps Script Web App — FREE, UNLIMITED submissions
+  // HOW TO SET UP (one-time, takes 5 minutes):
+  // 1. Go to https://sheets.google.com → create a new sheet
+  //    Name columns in Row 1: timestamp | type | student | class |
+  //    school | lesson | tier | score | q1 | q2 | q3 | q4 | q5 | q6 | suggestions
+  // 2. In the sheet: Extensions → Apps Script → paste this code:
+  //    function doPost(e) {
+  //      var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  //      var d = JSON.parse(e.postData.contents);
+  //      sheet.appendRow([new Date(),d.type,d.student,d.class,d.school,
+  //        d.lesson,d.tier,d.score,d.q1_overall,d.q2_targeted,d.q3_hsk_help,
+  //        d.q4_key_points,d.q5_least_fav,d.q6_most_fav,d.suggestions]);
+  //      return ContentService.createTextOutput('ok');
+  //    }
+  // 3. Deploy → New deployment → Web app
+  //    Execute as: Me | Who has access: Anyone
+  //    Copy the Web App URL and paste it below replacing PASTE_YOUR_URL_HERE
+  // ──────────────────────────────────────────────────────────────
+  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby9odViSPuKM6OQSYQa3VrhsLf0EUMHVo-y1B_89yhqpV-1BwFFf1v-aS6P2r3BfLZWPA/exec';
+
+  if (APPS_SCRIPT_URL === 'PASTE_YOUR_GOOGLE_APPS_SCRIPT_URL_HERE') {
+    // Fallback: save to localStorage so data is never lost even before setup
+    try {
+      const existing = JSON.parse(localStorage.getItem('surveyResponses') || '[]');
+      existing.push(payload);
+      localStorage.setItem('surveyResponses', JSON.stringify(existing));
+    } catch(e) {}
+    document.getElementById('surveyForm_submit').style.display = 'none';
+    document.getElementById('surveyThanks').style.display = 'block';
+    document.getElementById('surveyThanks').innerHTML =
+      '🎉 感谢你的反馈！<br><span style="font-size:12px;color:var(--muted);font-family:DM Sans,sans-serif;">（老师尚未配置收集服务，已暂存于本设备。Teacher has not yet linked Google Sheets — response saved locally.）</span>';
+    return;
+  }
+
+  // Send to Google Sheets via Apps Script (no-cors mode required)
+  fetch(APPS_SCRIPT_URL, {
+    method: 'POST',
+    mode: 'no-cors',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).then(() => {
+    document.getElementById('surveyForm_submit').style.display = 'none';
+    document.getElementById('surveyThanks').style.display = 'block';
+  }).catch(() => {
+    // Even on network error, save locally as backup
+    try {
+      const existing = JSON.parse(localStorage.getItem('surveyResponses') || '[]');
+      existing.push(payload);
+      localStorage.setItem('surveyResponses', JSON.stringify(existing));
+    } catch(e) {}
+    btn.disabled = false; btn.textContent = '提交反馈 Submit Feedback 📤';
+    alert('网络错误，请稍后再试。Network error — please try again later.');
+  });
+}
+
+// Ensure DOM is ready before building lesson grid
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', buildSetup);
+} else {
+  buildSetup();
+}
+</script>
+<!-- ─── FEEDBACK SECTION ─── -->
+<style>
+.feedback-section {
+  max-width: 780px;
+  margin: 2.5rem auto 0;
+  padding: 0 1.5rem 3rem;
+}
+.feedback-card {
+  background: var(--card);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 2rem 2rem 1.75rem;
+}
+.feedback-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 0.5rem;
+}
+.feedback-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #d4622a 0%, #c9a227 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  flex-shrink: 0;
+}
+.feedback-title {
+  font-size: 17px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+.feedback-title span {
+  font-family: 'Noto Serif SC', serif;
+}
+.feedback-subtitle {
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+.feedback-desc {
+  font-size: 13.5px;
+  color: var(--muted);
+  line-height: 1.7;
+  margin-bottom: 1.25rem;
+  padding: 12px 14px;
+  background: var(--bg);
+  border-radius: 10px;
+  border-left: 3px solid var(--t1);
+}
+.feedback-desc strong {
+  color: var(--text);
+}
+.feedback-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+@media (max-width: 520px) {
+  .feedback-form-row { grid-template-columns: 1fr; }
+}
+.feedback-input, .feedback-textarea {
+  width: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 11px 14px;
+  font-size: 14px;
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  outline: none;
+  transition: border-color .15s, background .15s;
+}
+.feedback-input:focus, .feedback-textarea:focus {
+  border-color: #999;
+  background: var(--card);
+}
+.feedback-textarea {
+  resize: vertical;
+  min-height: 100px;
+  margin-bottom: 10px;
+  line-height: 1.6;
+}
+.feedback-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.feedback-contact-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.feedback-contact-info a {
+  color: var(--t1);
+  font-weight: 600;
+  text-decoration: none;
+}
+.feedback-contact-info a:hover {
+  text-decoration: underline;
+}
+.feedback-submit {
+  padding: 11px 28px;
+  background: var(--text);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  transition: opacity .15s;
+  white-space: nowrap;
+}
+.feedback-submit:hover { opacity: .85; }
+.feedback-thanks {
+  display: none;
+  text-align: center;
+  padding: 1.5rem 0 0.5rem;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--correct);
+  font-family: 'Noto Serif SC', serif;
+}
+.feedback-thanks span {
+  display: block;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 12px;
+  color: var(--muted);
+  font-weight: 400;
+  margin-top: 4px;
+}
+.feedback-divider {
+  border: none;
+  border-top: 1.5px solid var(--border);
+  margin: 1.5rem 0 1.5rem;
+}
+</style>
+
+<script>
+function submitFeedback() {
+  var name = document.getElementById('fb_name').value.trim();
+  var lesson = document.getElementById('fb_lesson').value.trim();
+  var msg = document.getElementById('fb_msg').value.trim();
+  if (!msg) {
+    document.getElementById('fb_msg').focus();
+    document.getElementById('fb_msg').style.borderColor = 'var(--wrong)';
+    setTimeout(function(){ document.getElementById('fb_msg').style.borderColor = ''; }, 1500);
+    return;
+  }
+  var btn = document.querySelector('.feedback-submit');
+  btn.disabled = true;
+  btn.textContent = '发送中… Sending…';
+  fetch('https://formspree.io/f/mqenoyyz', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+    body: JSON.stringify({
+      name: name || '（未填写）',
+      lesson: lesson || '（未填写）',
+      message: msg
+    })
+  })
+  .then(function(res) {
+    if (res.ok) {
+      document.getElementById('feedbackForm').style.display = 'none';
+      document.getElementById('feedbackThanks').style.display = 'block';
+    } else {
+      btn.disabled = false;
+      btn.textContent = '提交反馈 Submit';
+      alert('发送失败，请直接发邮件至 Sun.Hao@moe.sch.ae');
+    }
+  })
+  .catch(function() {
+    btn.disabled = false;
+    btn.textContent = '提交反馈 Submit';
+    alert('网络错误，请直接发邮件至 Sun.Hao@moe.sch.ae');
+  });
+}
+</script>
+</body>
+</html>
